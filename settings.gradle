@@ -49,6 +49,8 @@ include modulePrefix + 'demo-surface'
 project(modulePrefix + 'demo-surface').projectDir = new File(rootDir, 'demos/surface')
 include modulePrefix + 'demo-transformer'
 project(modulePrefix + 'demo-transformer').projectDir = new File(rootDir, 'demos/transformer')
+include modulePrefix + 'demo-download'
+project(modulePrefix + 'demo-download').projectDir = new File(rootDir, 'demos/download')
 
 // Modules that only contain tests (not utils used by other test modules)
 include modulePrefix + 'test-exoplayer-playback'

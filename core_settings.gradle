@@ -96,6 +96,9 @@ project(modulePrefix + 'lib-muxer').projectDir = new File(rootDir, 'libraries/mu
 include modulePrefix + 'lib-transformer'
 project(modulePrefix + 'lib-transformer').projectDir = new File(rootDir, 'libraries/transformer')
 
+include modulePrefix + 'downloader'
+project(modulePrefix + 'downloader').projectDir = new File(rootDir, 'libraries/downloader')
+
 include modulePrefix + 'test-utils-robolectric'
 project(modulePrefix + 'test-utils-robolectric').projectDir = new File(rootDir, 'libraries/test_utils_robolectric')
 include modulePrefix + 'test-data'

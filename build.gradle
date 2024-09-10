@@ -15,11 +15,20 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/AtlasXV/android-libs")
+            credentials {
+                username = System.getenv("GPR_USR") ?: project.findProperty("GPR_USR")
+                password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
+            }
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.3.2'
         classpath 'com.google.android.gms:strict-version-matcher-plugin:1.2.4'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.10'
+        classpath("com.atlasv.android.plugin:publishlib:2.3.0")
     }
 }
 allprojects {
@@ -30,6 +39,14 @@ allprojects {
             url 'https://jitpack.io'
             content {
                 includeGroup "com.github.philburk"
+            }
+        }
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/AtlasXV/android-libs")
+            credentials {
+                username = System.getenv("GPR_USR") ?: project.findProperty("GPR_USR")
+                password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
             }
         }
     }
