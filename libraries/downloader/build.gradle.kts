@@ -40,15 +40,9 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-
-    val media3Lib = "1.4.1"
-    releaseApi("androidx.media3:media3-exoplayer:$media3Lib")
-    releaseApi("androidx.media3:media3-datasource:$media3Lib")
-    releaseApi("androidx.media3:media3-datasource-okhttp:$media3Lib")
+    implementation(project(":lib-exoplayer"))
+    implementation(project(":lib-datasource"))
+    implementation(project(":lib-datasource-okhttp"))
 
     api("com.atlasv.android:loader:1.0.0")
-
-    debugApi("androidx.media3:media3-exoplayer:$media3Lib")
-    debugApi("androidx.media3:media3-datasource:$media3Lib")
-    debugApi("androidx.media3:media3-datasource-okhttp:$media3Lib")
 }

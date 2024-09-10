@@ -25,6 +25,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
 
 import android.net.Uri;
+import android.webkit.URLUtil;
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
@@ -398,6 +399,8 @@ public final class CacheDataSource implements DataSource {
 
   /** Cache ignored due to a request with an unset length. */
   public static final int CACHE_IGNORED_REASON_UNSET_LENGTH = 1;
+
+  public static final int CACHE_IGNORED_NON_HTTP = 2;
 
   /** Minimum number of bytes to read before checking cache for availability. */
   private static final long MIN_READ_BEFORE_CHECKING_CACHE = 100 * 1024;
@@ -870,6 +873,10 @@ public final class CacheDataSource implements DataSource {
   }
 
   private int shouldIgnoreCacheForRequest(DataSpec dataSpec) {
+    // 非网络请求不需要缓存
+    if (!URLUtil.isNetworkUrl(dataSpec.uri.toString())){
+      return CACHE_IGNORED_NON_HTTP;
+    }
     if (ignoreCacheOnError && seenCacheError) {
       return CACHE_IGNORED_REASON_ERROR;
     } else if (ignoreCacheForUnsetLengthRequests && dataSpec.length == C.LENGTH_UNSET) {
