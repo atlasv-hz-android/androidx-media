@@ -20,15 +20,16 @@ class MediaXDownloaderCore(
     ): File {
         val dataSource = mediaXCache.createDataSource()
         val dataSpec = DataSpec.Builder().setUri(downloadUrl).build()
+        val temporaryBuffer = ByteArray(CacheWriter.DEFAULT_BUFFER_SIZE_BYTES)
         val cacheWriter = CacheWriter(
-            dataSource, dataSpec, null
+            dataSource, dataSpec, temporaryBuffer
         ) { requestLength, bytesCached, newBytesCached ->
             downloadListener?.onProgress(
                 requestLength, bytesCached, newBytesCached, downloadUrl, id
             )
         }
         cacheWriter.cache()
-        dataSource.saveDataSpec(dataSpec, destFile)
+        dataSource.saveDataSpec(dataSpec, destFile, temporaryBuffer)
         val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
         mediaXCache.cache.removeResource(cacheKey)
         return destFile

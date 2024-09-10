@@ -5,6 +5,7 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.cache.CacheWriter
 import java.io.File
 import java.io.FileOutputStream
 
@@ -14,19 +15,22 @@ import java.io.FileOutputStream
 
 
 @OptIn(UnstableApi::class)
-fun DataSource.saveDataSpec(dataSpec: DataSpec, destFile: File) {
+fun DataSource.saveDataSpec(
+    dataSpec: DataSpec, destFile: File,
+    temporaryBuffer: ByteArray = ByteArray(
+        CacheWriter.DEFAULT_BUFFER_SIZE_BYTES
+    )
+) {
     destFile.parentFile?.mkdirs()
     val tmpFile = File(destFile.parentFile, destFile.name + ".tmp")
     val fos = FileOutputStream(tmpFile)
     var bytesRead = 0
-    val bufferLength = 1024
-    val buffer = ByteArray(bufferLength)
     try {
         this.open(dataSpec)
         while (bytesRead != C.RESULT_END_OF_INPUT) {
-            bytesRead = this.read(buffer, 0, bufferLength)
+            bytesRead = this.read(temporaryBuffer, 0, temporaryBuffer.size)
             if (bytesRead != C.RESULT_END_OF_INPUT) {
-                fos.write(buffer, 0, bytesRead)
+                fos.write(temporaryBuffer, 0, bytesRead)
             }
         }
         tmpFile.renameTo(destFile)
