@@ -9,10 +9,10 @@ import java.io.File
  * Created by weiping on 2024/9/7
  */
 class MediaXDownloaderCore(
-    mediaXCacheSupplier: () -> MediaXCache
+    mediaXCacheSupplier: MediaXCacheSupplier
 ) {
     private val mediaXCache: MediaXCache by lazy {
-        mediaXCacheSupplier()
+        mediaXCacheSupplier.get()
     }
 
     fun download(
@@ -29,7 +29,8 @@ class MediaXDownloaderCore(
         }
         cacheWriter.cache()
         dataSource.saveDataSpec(dataSpec, destFile)
-        mediaXCache.cache.removeResource(downloadUrl)
+        val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
+        mediaXCache.cache.removeResource(cacheKey)
         return destFile
     }
 }

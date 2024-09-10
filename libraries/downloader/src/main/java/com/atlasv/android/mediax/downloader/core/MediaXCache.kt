@@ -17,7 +17,7 @@ class MediaXCache(
     private val appContext: Context,
     val cache: Cache,
     private val okhttpClient: OkHttpClient,
-    private val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT
+    val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT
 ) {
 
     private fun createHttpDataSourceFactory(): DefaultDataSource.Factory {
