@@ -16,7 +16,7 @@ import java.io.File
 class MediaXDownloadEngine(
     mediaXCacheSupplier: MediaXCacheSupplier,
     downloadListener: DownloadListener?,
-    listener: ResourceContentLoadListener<DownloadRequest, File>
+    listener: ResourceContentLoadListener<DownloadRequest, File>?
 ) : ResourceContentLoader<DownloadRequest, File>(listener = listener, enableMemCache = false) {
     private val downloadCore =
         MediaXDownloaderCore(mediaXCacheSupplier)

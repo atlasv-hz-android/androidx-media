@@ -49,6 +49,7 @@ allprojects {
                 password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
             }
         }
+        mavenLocal()
     }
     if (it.hasProperty('externalBuildDir')) {
         if (!new File(externalBuildDir).isAbsolute()) {
