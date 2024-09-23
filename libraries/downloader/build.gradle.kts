@@ -44,5 +44,5 @@ dependencies {
     implementation(project(":lib-datasource"))
     implementation(project(":lib-datasource-okhttp"))
 
-    api("com.atlasv.android:loader:1.1.1-alpha02")
+    api("com.atlasv.android:loader:1.2.0")
 }
