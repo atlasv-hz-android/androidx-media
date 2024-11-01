@@ -76,7 +76,7 @@ class MainViewModel : ViewModel() {
                 ?: Long.MAX_VALUE
         logger.d { "Content-Length=$totalLength, url=$downloadUrl" }
         coroutineScope {
-            val rangeCount = 2
+            val rangeCount = 3
             val rangeLength = totalLength / rangeCount
             val jobs = (0 until rangeCount).map { index ->
                 val rangeStart = index * rangeLength

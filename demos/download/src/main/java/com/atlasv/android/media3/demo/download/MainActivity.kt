@@ -32,6 +32,9 @@ private const val TEST_URL_IMAGE_3 =
 private const val TEST_URL_AUDIO_1 =
     "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/audio/guitar_xushi_aigei_com.mp3"
 
+private const val INS_IMAGE1 =
+    "https://scontent-lhr8-1.cdninstagram.com/v/t51.29350-15/464648271_1061991415569752_8942922764679332935_n.webp?se=7&stp=dst-jpg_e35&efg=eyJ2ZW5jb2RlX3RhZyI6ImltYWdlX3VybGdlbi4xMDgweDE5MjAuc2RyLmYyOTM1MC5kZWZhdWx0X2ltYWdlIn0&_nc_ht=scontent-lhr8-1.cdninstagram.com&_nc_cat=108&_nc_ohc=tC9qkneVqXAQ7kNvgEgm3Vt&_nc_gid=2483d986144546b19e9751b7241ada2f&edm=ANmP7GQBAAAA&ccb=7-5&ig_cache_key=MzQ4ODU3MTI2MTczNDI0MTg1Ng%3D%3D.3-ccb7-5&oh=00_AYDxfLs5UeGAUQiI0oUfTJrJKC7obOVNNXubP57Q9Qoxfg&oe=672542C8&_nc_sid=982cc7"
+
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +61,10 @@ class MainActivity : ComponentActivity() {
 
                         Greeting(text = "Google Storage", modifier = Modifier, onClick = {
                             viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_3)
+                        })
+
+                        Greeting(text = "Instagram", modifier = Modifier, onClick = {
+                            viewModel.testDownload(downloadUrl = INS_IMAGE1)
                         })
                     }
                 }
