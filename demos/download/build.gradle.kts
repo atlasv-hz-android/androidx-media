@@ -68,9 +68,6 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     implementation(project(":downloader"))
-    implementation(project(":lib-exoplayer"))
-    implementation(project(":lib-datasource"))
-    implementation(project(":lib-datasource-okhttp"))
     implementation("com.atlasv.android:loader:1.2.0")
     implementation("com.atlasv.android:log:2.4.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
