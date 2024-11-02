@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.androidxMediaSettingsDir/common_library_config.gradle"
-apply plugin: "com.atlasv.android.plugin.publishlib"
 
 // Make sure this project is evaluated after all other libraries. This ensures
 // the Gradle properties of each library are populated and we can automatically
@@ -90,3 +89,4 @@ ext {
     releaseArtifactId = 'media3-common'
     releaseName = 'Media3 common module'
 }
+apply from: '../../publish.gradle'
