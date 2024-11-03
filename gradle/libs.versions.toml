@@ -1,0 +1,10 @@
+[versions]
+media3 = "1.4.1"
+
+[libraries]
+androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
+androidx-media3-database = { module = "androidx.media3:media3-database", version.ref = "media3" }
+androidx-media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
+
+[plugins]
+
