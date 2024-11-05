@@ -5,7 +5,9 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheWriter
+import androidx.media3.datasource.cache.ContentMetadata
 import java.io.File
 import java.io.FileOutputStream
 
@@ -39,4 +41,28 @@ fun DataSource.saveDataSpec(
         this.close()
         tmpFile.delete()
     }
+}
+
+@OptIn(UnstableApi::class)
+fun Cache.getContentLength(key: String): Long {
+    return getContentMetadata(key).get(ContentMetadata.KEY_CONTENT_LENGTH, 0)
+}
+
+@OptIn(UnstableApi::class)
+fun Cache.getCachedBytes(key: String): Long {
+    return getCachedBytes(key, 0, Long.MAX_VALUE)
+}
+
+@OptIn(UnstableApi::class)
+fun Cache.isCacheComplete(key: String): Boolean {
+    return getContentLength(key) > 0 && getCachedBytes(key) >= getContentLength(key)
+}
+
+@OptIn(UnstableApi::class)
+fun Cache.getProgressInfo(downloadUrl: String): String {
+    return "${this.getCachedBytes(downloadUrl)}/${getContentLength(downloadUrl)}(complete=${
+        isCacheComplete(
+            downloadUrl
+        )
+    })"
 }

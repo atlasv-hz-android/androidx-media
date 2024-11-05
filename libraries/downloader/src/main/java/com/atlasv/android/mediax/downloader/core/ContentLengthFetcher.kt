@@ -1,4 +1,4 @@
-package com.atlasv.android.media3.demo.download.ui.theme
+package com.atlasv.android.mediax.downloader.core
 
 import com.atlasv.android.loader.fetch.ResourceContentFetcher
 import com.atlasv.android.loader.request.ContentRequestStringModel

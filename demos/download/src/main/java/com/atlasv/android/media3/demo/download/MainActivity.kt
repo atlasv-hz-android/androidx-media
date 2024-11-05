@@ -49,8 +49,8 @@ class MainActivity : ComponentActivity() {
                             .padding(16.dp)
                     ) {
                         Greeting(text = "Aliyun", modifier = Modifier, onClick = {
-//                            viewModel.testDownload(downloadUrl = TEST_URL_VIDEO1)
-                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_1)
+                            viewModel.testDownload(downloadUrl = TEST_URL_VIDEO1)
+//                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_1)
 //                            viewModel.testDownload(downloadUrl = TEST_URL_AUDIO_1)
                         })
 
