@@ -21,8 +21,7 @@ class ParallelCacheWriter(
         rangeCountStrategy: RangeCountStrategy,
         progressListener: ProgressListener?
     ) {
-
-        val mergeProgressInfo = mutableMapOf<Int, Pair<Long, Long>>()
+        val parallelProgressListener = ParallelProgressListener(progressListener)
         coroutineScope {
             val dataSpecs = createDataSpecs(
                 uriString,
@@ -31,21 +30,15 @@ class ParallelCacheWriter(
             )
             val jobs = dataSpecs.mapIndexed { index, dataSpec ->
                 async {
-                    mediaXLogger?.d { "Build DataSpec: $dataSpec" }
                     val dataSource = mediaXCache.createDataSource()
                     CacheWriter(
                         dataSource, dataSpec, null
                     ) { requestLength, bytesCached, newBytesCached ->
-                        mergeProgressInfo[index] = mergeProgressInfo[index]?.copy(
-                            first = bytesCached, second = requestLength
-                        ) ?: (bytesCached to requestLength)
-                        val (mergeBytesCached, mergeContentLength) = calcMergeProgress(
+                        parallelProgressListener.onProgress(
+                            index,
                             contentLength,
-                            mergeProgressInfo
-                        )
-                        progressListener?.onProgress(
-                            mergeContentLength,
-                            mergeBytesCached,
+                            requestLength,
+                            bytesCached,
                             newBytesCached
                         )
                     }.cache()
@@ -77,20 +70,6 @@ class ParallelCacheWriter(
             mediaXLogger?.d { "Build DataSpec: $dataSpec" }
             dataSpec
         }
-    }
-
-    private fun calcMergeProgress(
-        contentLength: Long,
-        infoMap: Map<Int, Pair<Long, Long>>
-    ): Pair<Long, Long> {
-        val values: Collection<Pair<Long, Long>> = infoMap.values
-        val validContentLength = contentLength.takeIf { it > 0 } ?: values.sumOf {
-            it.second
-        }
-        val mergeBytesCached = values.sumOf {
-            it.first
-        }
-        return mergeBytesCached to validContentLength
     }
 }
 
