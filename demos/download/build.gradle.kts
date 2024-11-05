@@ -51,10 +51,10 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-    implementation("androidx.activity:activity-compose:1.9.1")
-    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
+    implementation(libs.androidx.core.ktx)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -69,10 +69,8 @@ dependencies {
 
     implementation(project(":downloader"))
     implementation(project(":lib-exoplayer"))
-    implementation(project(":lib-datasource"))
-    implementation(project(":lib-datasource-okhttp"))
-    implementation("com.atlasv.android:loader:1.2.0")
-    implementation("com.atlasv.android:log:2.4.2")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(libs.atlasv.loader)
+    implementation(libs.log)
+    implementation(libs.okhttp)
 
 }
