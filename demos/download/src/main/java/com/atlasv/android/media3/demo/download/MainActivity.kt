@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
                         Greeting(text = "Digital Ocean", modifier = Modifier, onClick = {
                             viewModel.testDownload(downloadUrl = TEST_URL_VIDEO2)
-                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_2)
+//                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_2)
                         })
 
                         Greeting(text = "Google Storage", modifier = Modifier, onClick = {
