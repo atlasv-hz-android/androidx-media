@@ -26,14 +26,13 @@ class ParallelCacheWriter(
             if (!isContentLengthKnown) 1 else rangeCountStrategy.getRangeCount(contentLength = contentLength)
                 .coerceAtLeast(1)
         val rangeLength = if (isContentLengthKnown) contentLength / rangeCount else contentLength
-        val baseDataSpec = DataSpec.Builder().setUri(uriString)
         mediaXLogger?.d { "Set range count to $rangeCount, contentLength=$contentLength, uriString=$uriString" }
         coroutineScope {
             val jobs = (0 until rangeCount).map { index ->
                 async {
                     val rangeStart = rangeLength * index
                     val dataSpec =
-                        baseDataSpec.setPosition(rangeStart).apply {
+                        DataSpec.Builder().setUri(uriString).setPosition(rangeStart).apply {
                             if (index != rangeCount - 1) {
                                 setLength(rangeLength)
                             }
