@@ -45,5 +45,6 @@ dependencies {
     api(libs.androidx.media3.datasource.okhttp)
     api(libs.androidx.media3.database)
     api(libs.androidx.media3.common)
-    api("com.atlasv.android:loader:1.2.0")
+    api(libs.androidx.media3.exoplayer.hls)
+    api(libs.atlasv.loader)
 }
