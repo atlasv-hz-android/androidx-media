@@ -1,25 +1,22 @@
 package com.atlasv.android.mediax.downloader.core
 
-import android.content.Context
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.CacheEvictor
 import androidx.media3.datasource.cache.CacheKeyFactory
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
-import okhttp3.OkHttpClient
+import com.atlasv.android.mediax.downloader.datasource.UpstreamStrategy
 import java.io.File
 
 /**
  * Created by weiping on 2024/11/5
  */
 class SimpleMediaXCacheSupplier(
-    private val appContext: Context,
-    private val okhttpClient: OkHttpClient,
+    private val upstreamStrategy: UpstreamStrategy,
     private val cacheDirSupplier: () -> File,
     private val databaseProvider: StandaloneDatabaseProvider,
     private val evictor: CacheEvictor = NoOpCacheEvictor(),
-    private val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT,
-    private val userAgent: String = MediaXConstants.DEFAULT_USER_AGENT
+    private val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT
 ) : MediaXCacheSupplier {
     private val mediaXCache: MediaXCache by lazy {
         val dir = cacheDirSupplier.invoke().also {
@@ -31,11 +28,9 @@ class SimpleMediaXCacheSupplier(
             databaseProvider,
         )
         MediaXCache(
-            appContext,
-            cache,
-            okhttpClient,
-            cacheKeyFactory = cacheKeyFactory,
-            userAgent = userAgent
+            cache = cache,
+            upstreamStrategy = upstreamStrategy,
+            cacheKeyFactory = cacheKeyFactory
         )
     }
 

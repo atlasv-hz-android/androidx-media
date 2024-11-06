@@ -1,13 +1,10 @@
 package com.atlasv.android.mediax.downloader.core
 
 import android.annotation.SuppressLint
-import android.content.Context
-import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheKeyFactory
-import androidx.media3.datasource.okhttp.OkHttpDataSource
-import okhttp3.OkHttpClient
+import com.atlasv.android.mediax.downloader.datasource.UpstreamStrategy
 
 /**
  *
@@ -17,19 +14,10 @@ import okhttp3.OkHttpClient
  */
 @SuppressLint("UnsafeOptInUsageError")
 class MediaXCache(
-    private val appContext: Context,
     val cache: Cache,
-    private val okhttpClient: OkHttpClient,
+    private val upstreamStrategy: UpstreamStrategy,
     val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT,
-    private val userAgent: String = MediaXConstants.DEFAULT_USER_AGENT
 ) {
-
-    private fun createHttpDataSourceFactory(): DefaultDataSource.Factory {
-        return DefaultDataSource.Factory(
-            appContext,
-            OkHttpDataSource.Factory(okhttpClient).setUserAgent(userAgent)
-        )
-    }
 
     val cacheDataSourceFactory by lazy {
         createCacheDataSourceFactory()
@@ -37,7 +25,7 @@ class MediaXCache(
 
     private fun createCacheDataSourceFactory(): CacheDataSource.Factory {
         return CacheDataSource.Factory().setCache(cache).setCacheKeyFactory(cacheKeyFactory)
-            .setUpstreamDataSourceFactory(createHttpDataSourceFactory())
+            .setUpstreamDataSourceFactory(upstreamStrategy.createDataSourceFactory())
     }
 
     fun createDataSource(): CacheDataSource {
