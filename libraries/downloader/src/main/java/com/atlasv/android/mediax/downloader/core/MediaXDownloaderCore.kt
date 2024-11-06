@@ -4,6 +4,7 @@ import androidx.media3.common.C
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
+import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import java.io.File
 
 /**
@@ -15,6 +16,10 @@ class MediaXDownloaderCore(
 ) {
     private val mediaXCache: MediaXCache by lazy {
         mediaXCacheSupplier.get()
+    }
+
+    fun isFullyCached(uriString: String): Boolean {
+        return mediaXCache.cache.isCacheComplete(uriString)
     }
 
     suspend fun download(

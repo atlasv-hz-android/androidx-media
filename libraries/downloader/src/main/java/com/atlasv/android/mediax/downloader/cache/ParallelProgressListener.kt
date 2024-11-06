@@ -34,7 +34,7 @@ class ParallelProgressListener(private val callback: ProgressListener?) {
         contentLength: Long,
         infoMap: Map<Int, Pair<Long, Long>>
     ): Pair<Long, Long> {
-        val values: Collection<Pair<Long, Long>> = infoMap.values
+        val values: Collection<Pair<Long, Long>> = infoMap.values.toList()
         val validContentLength = contentLength.takeIf { it > 0 } ?: values.sumOf {
             it.second
         }

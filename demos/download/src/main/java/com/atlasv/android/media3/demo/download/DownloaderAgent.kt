@@ -7,10 +7,12 @@ import com.atlasv.android.mediax.downloader.api.MediaXDownloadClient
 import com.atlasv.android.mediax.downloader.core.ContentLengthLoader
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCacheSupplier
+import com.atlasv.android.mediax.downloader.core.MediaXDownloaderCore
 import com.atlasv.android.mediax.downloader.core.SimpleMediaXCacheSupplier
 import com.atlasv.android.mediax.downloader.datasource.ConfigurableUpstreamStrategy
 import com.atlasv.android.mediax.downloader.datasource.OkhttpUpstreamStrategy
 import com.atlasv.android.mediax.downloader.datasource.UpstreamStrategy
+import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import okhttp3.OkHttpClient
 import java.io.File
 
@@ -22,23 +24,28 @@ object DownloaderAgent : DownloadListener {
     private val okHttpClient by lazy {
         OkHttpClient.Builder().build()
     }
-    private val contentLengthLoader by lazy {
+    val contentLengthLoader by lazy {
         ContentLengthLoader(okHttpClient)
     }
     private val databaseProvider by lazy {
         // Note: This should be a singleton in your app.
         StandaloneDatabaseProvider(App.app)
     }
+    private val mediaXCacheSupplier by lazy {
+        createCacheSupplier()
+    }
+    private val downloadCore by lazy {
+        MediaXDownloaderCore(mediaXCacheSupplier, contentLengthLoader)
+    }
     val client by lazy {
         MediaXDownloadClient(
-            mediaXCacheSupplier = getCacheSupplier(),
+            downloadCore = downloadCore,
             downloadListener = this,
-            listener = null,
-            contentLengthLoader = contentLengthLoader,
+            listener = null
         )
     }
 
-    private fun getCacheSupplier(): MediaXCacheSupplier {
+    private fun createCacheSupplier(): MediaXCacheSupplier {
         return SimpleMediaXCacheSupplier(
             upstreamStrategy = getUpstreamDataSourceStrategy(),
             cacheDirSupplier = {
@@ -64,5 +71,6 @@ object DownloaderAgent : DownloadListener {
         downloadUrl: String,
         id: String
     ) {
+        mediaXLogger?.d { "onProgress: $bytesCached/${requestLength}(${(bytesCached * 100f / requestLength).toInt()})($downloadUrl)" }
     }
 }

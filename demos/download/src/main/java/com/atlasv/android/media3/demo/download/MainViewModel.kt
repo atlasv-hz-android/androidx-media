@@ -23,7 +23,7 @@ import kotlin.system.measureTimeMillis
 class MainViewModel : ViewModel() {
     fun testDownload(downloadUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            DownloaderAgent.client.contentLengthLoader.fetch(ContentRequestStringModel(uriString = downloadUrl))
+            DownloaderAgent.contentLengthLoader.fetch(ContentRequestStringModel(uriString = downloadUrl))
             testRangeCount(downloadUrl, 3, 1)
         }
     }
