@@ -10,6 +10,9 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import okhttp3.OkHttpClient
 
 /**
+ *
+ * [缓存媒体](https://developer.android.com/media/media3/exoplayer/network-stacks?hl=zh-cn#caching)
+ *
  * Created by weiping on 2024/7/8
  */
 @SuppressLint("UnsafeOptInUsageError")
