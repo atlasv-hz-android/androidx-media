@@ -17,7 +17,8 @@ class SimpleMediaXCacheSupplier(
     private val okhttpClient: OkHttpClient,
     private val cacheDirSupplier: () -> File,
     private val evictor: CacheEvictor = NoOpCacheEvictor(),
-    private val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT
+    private val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT,
+    private val userAgent: String = MediaXConstants.DEFAULT_USER_AGENT
 ) : MediaXCacheSupplier {
     private val mediaXCache: MediaXCache by lazy {
         val dir = cacheDirSupplier.invoke().also {
@@ -29,7 +30,11 @@ class SimpleMediaXCacheSupplier(
             StandaloneDatabaseProvider(appContext),
         )
         MediaXCache(
-            appContext, cache, okhttpClient, cacheKeyFactory = cacheKeyFactory
+            appContext,
+            cache,
+            okhttpClient,
+            cacheKeyFactory = cacheKeyFactory,
+            userAgent = userAgent
         )
     }
 

@@ -17,12 +17,14 @@ class MediaXCache(
     private val appContext: Context,
     val cache: Cache,
     private val okhttpClient: OkHttpClient,
-    val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT
+    val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT,
+    private val userAgent: String = MediaXConstants.DEFAULT_USER_AGENT
 ) {
 
     private fun createHttpDataSourceFactory(): DefaultDataSource.Factory {
         return DefaultDataSource.Factory(
-            appContext, OkHttpDataSource.Factory(okhttpClient)
+            appContext,
+            OkHttpDataSource.Factory(okhttpClient).setUserAgent(userAgent)
         )
     }
 
