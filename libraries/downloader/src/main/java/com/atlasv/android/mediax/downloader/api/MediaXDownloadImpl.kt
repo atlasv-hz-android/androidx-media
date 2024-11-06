@@ -14,7 +14,11 @@ class MediaXDownloadImpl(
 ) : ResourceContentFetcher<DownloadRequest, File> {
     override suspend fun fetch(inputData: DownloadRequest): File {
         return downloaderCore.download(
-            downloadUrl = inputData.url, inputData.id, destFile = inputData.destFile, listener
+            downloadUrl = inputData.url,
+            inputData.id,
+            destFile = inputData.destFile,
+            inputData.rangeCountStrategy,
+            listener
         )
     }
 

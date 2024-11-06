@@ -35,6 +35,17 @@ private const val TEST_URL_AUDIO_1 =
 private const val INS_IMAGE1 =
     "https://scontent-lhr8-1.cdninstagram.com/v/t51.29350-15/464648271_1061991415569752_8942922764679332935_n.webp?se=7&stp=dst-jpg_e35&efg=eyJ2ZW5jb2RlX3RhZyI6ImltYWdlX3VybGdlbi4xMDgweDE5MjAuc2RyLmYyOTM1MC5kZWZhdWx0X2ltYWdlIn0&_nc_ht=scontent-lhr8-1.cdninstagram.com&_nc_cat=108&_nc_ohc=tC9qkneVqXAQ7kNvgEgm3Vt&_nc_gid=2483d986144546b19e9751b7241ada2f&edm=ANmP7GQBAAAA&ccb=7-5&ig_cache_key=MzQ4ODU3MTI2MTczNDI0MTg1Ng%3D%3D.3-ccb7-5&oh=00_AYDxfLs5UeGAUQiI0oUfTJrJKC7obOVNNXubP57Q9Qoxfg&oe=672542C8&_nc_sid=982cc7"
 
+// Head 请求拿不到Content-Length，code=404
+private const val PIXABAY_VIDEO_1 = "https://cdn.pixabay.com/video/2016/04/18/2849-163375551.mp4"
+
+private const val X_VIDEO_1 =
+    "https://video.twimg.com/amplify_video/1821285816372514816/vid/avc1/480x270/ghNQV5-RKNnYAfNs.mp4?tag=14"
+
+private const val DO_VIDEO1 =
+    "https://downloader-media.nyc3.cdn.digitaloceanspaces.com/public/video/test/148597-794221559_medium.mp4"
+private const val DO_VIDEO2 =
+    "https://downloader-media.nyc3.cdn.digitaloceanspaces.com/public/video/test/148597-794221559.mp4"
+
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,8 +66,7 @@ class MainActivity : ComponentActivity() {
                         })
 
                         Greeting(text = "Digital Ocean", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = TEST_URL_VIDEO2)
-//                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_2)
+                            viewModel.testDownload(downloadUrl = DO_VIDEO1)
                         })
 
                         Greeting(text = "Google Storage", modifier = Modifier, onClick = {
@@ -65,6 +75,13 @@ class MainActivity : ComponentActivity() {
 
                         Greeting(text = "Instagram", modifier = Modifier, onClick = {
                             viewModel.testDownload(downloadUrl = INS_IMAGE1)
+                        })
+                        Greeting(text = "Pixabay", modifier = Modifier, onClick = {
+                            viewModel.testDownload(downloadUrl = PIXABAY_VIDEO_1)
+                        })
+
+                        Greeting(text = "X", modifier = Modifier, onClick = {
+                            viewModel.testDownload(downloadUrl = X_VIDEO_1)
                         })
                     }
                 }

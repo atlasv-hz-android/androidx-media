@@ -6,7 +6,6 @@ import androidx.media3.datasource.cache.CacheWriter
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
-import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
 import java.io.File
 
@@ -15,15 +14,18 @@ import java.io.File
  */
 class MediaXDownloaderCore(
     mediaXCacheSupplier: MediaXCacheSupplier,
-    private val contentLengthLoader: ContentLengthLoader,
-    private val rangeCountStrategy: RangeCountStrategy = SimpleRangeStrategy(1)
+    private val contentLengthLoader: ContentLengthLoader
 ) {
     private val mediaXCache: MediaXCache by lazy {
         mediaXCacheSupplier.get()
     }
 
     suspend fun download(
-        downloadUrl: String, id: String, destFile: File, downloadListener: DownloadListener?
+        downloadUrl: String,
+        id: String,
+        destFile: File,
+        rangeCountStrategy: RangeCountStrategy,
+        downloadListener: DownloadListener?
     ): File {
         val dataSource = mediaXCache.createDataSource()
         val dataSpec = DataSpec.Builder().setUri(downloadUrl).build()
