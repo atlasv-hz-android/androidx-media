@@ -4,10 +4,12 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
+import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import java.io.File
 
 /**
  * Created by weiping on 2024/11/5
@@ -17,10 +19,12 @@ class ParallelCacheWriter(
 ) {
     suspend fun cache(
         uriString: String,
+        destFile: File,
         contentLength: Long,
         rangeCountStrategy: RangeCountStrategy,
-        progressListener: ProgressListener?
+        progressListener: ProgressListener?,
     ) {
+        destFile.parentFile?.mkdirs()
         val parallelProgressListener = ParallelProgressListener(progressListener)
         coroutineScope {
             val dataSpecs = createDataSpecs(
@@ -45,7 +49,17 @@ class ParallelCacheWriter(
                 }
             }
             jobs.awaitAll()
+            saveToDestFile(uriString, destFile)
+            mediaXLogger?.d { "Download to $destFile(${destFile.length()}), url=$uriString" }
         }
+    }
+
+    private fun saveToDestFile(uriString: String, destFile: File) {
+        val dataSource = mediaXCache.createDataSource()
+        val dataSpec = DataSpec.Builder().setUri(uriString).build()
+        dataSource.saveDataSpec(dataSpec, destFile)
+        val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
+        mediaXCache.cache.removeResource(cacheKey)
     }
 
     private fun createDataSpecs(

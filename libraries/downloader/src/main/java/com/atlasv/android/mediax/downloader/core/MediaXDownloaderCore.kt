@@ -1,12 +1,9 @@
 package com.atlasv.android.mediax.downloader.core
 
 import androidx.media3.common.C
-import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.cache.CacheWriter
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
-import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
 import java.io.File
 
 /**
@@ -27,15 +24,13 @@ class MediaXDownloaderCore(
         rangeCountStrategy: RangeCountStrategy,
         downloadListener: DownloadListener?
     ): File {
-        val dataSource = mediaXCache.createDataSource()
-        val dataSpec = DataSpec.Builder().setUri(downloadUrl).build()
-        val temporaryBuffer = ByteArray(CacheWriter.DEFAULT_BUFFER_SIZE_BYTES)
         val contentLength =
             contentLengthLoader.fetch(ContentRequestStringModel(downloadUrl)).result?.takeIf { it > 0 }
                 ?: C.LENGTH_UNSET.toLong()
         val cacheWriter = ParallelCacheWriter(mediaXCache)
         cacheWriter.cache(
             uriString = downloadUrl,
+            destFile = destFile,
             contentLength = contentLength,
             rangeCountStrategy = rangeCountStrategy,
             progressListener = { requestLength, bytesCached, newBytesCached ->
@@ -47,9 +42,6 @@ class MediaXDownloaderCore(
                     id
                 )
             })
-        dataSource.saveDataSpec(dataSpec, destFile, temporaryBuffer)
-        val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
-        mediaXCache.cache.removeResource(cacheKey)
         return destFile
     }
 }

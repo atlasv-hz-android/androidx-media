@@ -1,5 +1,6 @@
 package com.atlasv.android.media3.demo.download
 
+import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,9 +52,10 @@ class MainViewModel : ViewModel() {
             DownloadRequest(
                 url = downloadUrl,
                 id = downloadUrl,
-                destFile = File(appContext.getExternalFilesDir(null), "download-files").also {
-                    it.mkdirs()
-                },
+                destFile = File(
+                    appContext.getExternalFilesDir(null),
+                    "download-files/${Uri.parse(downloadUrl).lastPathSegment}"
+                ),
                 rangeCountStrategy = rangeStrategy
             )
         )
