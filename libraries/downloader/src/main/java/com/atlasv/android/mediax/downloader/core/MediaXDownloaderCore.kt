@@ -6,6 +6,7 @@ import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by weiping on 2024/9/7
@@ -14,6 +15,7 @@ class MediaXDownloaderCore(
     mediaXCacheSupplier: MediaXCacheSupplier,
     private val contentLengthLoader: ContentLengthLoader
 ) {
+    private val writerMap = ConcurrentHashMap<String, ParallelCacheWriter>()
     private val mediaXCache: MediaXCache by lazy {
         mediaXCacheSupplier.get()
     }
@@ -32,21 +34,29 @@ class MediaXDownloaderCore(
         val contentLength =
             contentLengthLoader.fetch(ContentRequestStringModel(downloadUrl)).result?.takeIf { it > 0 }
                 ?: C.LENGTH_UNSET.toLong()
-        val cacheWriter = ParallelCacheWriter(mediaXCache)
-        cacheWriter.cache(
-            uriString = downloadUrl,
-            destFile = destFile,
-            contentLength = contentLength,
-            rangeCountStrategy = rangeCountStrategy,
-            progressListener = { requestLength, bytesCached, newBytesCached ->
-                downloadListener?.onProgress(
-                    requestLength,
-                    bytesCached,
-                    newBytesCached,
-                    downloadUrl,
-                    id
-                )
-            })
-        return destFile
+        val cacheWriter = ParallelCacheWriter(mediaXCache, downloadUrl)
+        writerMap[downloadUrl] = cacheWriter
+        return try {
+            cacheWriter.cache(
+                destFile = destFile,
+                contentLength = contentLength,
+                rangeCountStrategy = rangeCountStrategy,
+                progressListener = { requestLength, bytesCached, newBytesCached ->
+                    downloadListener?.onProgress(
+                        requestLength,
+                        bytesCached,
+                        newBytesCached,
+                        downloadUrl,
+                        id
+                    )
+                })
+            destFile
+        } finally {
+            writerMap.remove(downloadUrl)
+        }
+    }
+
+    fun cancel(uriString: String, alsoDelete: Boolean = false) {
+        writerMap[uriString]?.cancel(alsoDelete = alsoDelete)
     }
 }
