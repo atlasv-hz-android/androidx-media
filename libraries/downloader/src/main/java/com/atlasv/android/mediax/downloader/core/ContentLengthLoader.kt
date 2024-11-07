@@ -1,5 +1,6 @@
 package com.atlasv.android.mediax.downloader.core
 
+import androidx.media3.common.C
 import com.atlasv.android.loader.ResourceContentLoader
 import com.atlasv.android.loader.fetch.ResourceContentFetcher
 import com.atlasv.android.loader.request.ContentRequestStringModel
@@ -29,5 +30,10 @@ class ContentLengthLoader(okhttpClient: OkHttpClient) :
                 }
             }
         }
+    }
+
+    suspend fun getContentLengthOrUnset(uriString: String): Long {
+        return this.fetch(ContentRequestStringModel(uriString)).result?.takeIf { it > 0 }
+            ?: C.LENGTH_UNSET.toLong()
     }
 }

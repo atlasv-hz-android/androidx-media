@@ -8,7 +8,7 @@ import androidx.media3.datasource.cache.CacheWriter.ProgressListener
 class ParallelProgressListener(private val callback: ProgressListener?) {
     private val mergeProgressInfo = mutableMapOf<Int, Pair<Long, Long>>()
 
-    fun onProgress(
+    private fun onProgressAtIndex(
         index: Int,
         contentLength: Long,
         requestLength: Long,
@@ -29,7 +29,6 @@ class ParallelProgressListener(private val callback: ProgressListener?) {
         )
     }
 
-
     private fun calcMergeProgress(
         contentLength: Long,
         infoMap: Map<Int, Pair<Long, Long>>
@@ -42,5 +41,17 @@ class ParallelProgressListener(private val callback: ProgressListener?) {
             it.first
         }
         return mergeBytesCached to validContentLength
+    }
+
+    fun asProgressListener(index: Int, contentLength: Long): ProgressListener {
+        return ProgressListener { requestLength, bytesCached, newBytesCached ->
+            this@ParallelProgressListener.onProgressAtIndex(
+                index,
+                contentLength,
+                requestLength,
+                bytesCached,
+                newBytesCached
+            )
+        }
     }
 }

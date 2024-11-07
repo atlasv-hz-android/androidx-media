@@ -8,6 +8,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.ContentMetadata
+import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import java.io.File
 import java.io.FileOutputStream
 
@@ -65,4 +66,10 @@ fun Cache.getProgressInfo(downloadUrl: String): String {
             downloadUrl
         )
     })"
+}
+
+fun Cache.removeResourceWithTrack(uriString: String) {
+    mediaXLogger?.w { "Remove resource(${this.getCachedBytes(uriString)}), key=$uriString" }
+    this.removeResource(uriString)
+    mediaXLogger?.w { "Resource removed,remain size=${getCachedBytes(uriString)}, key=$uriString" }
 }

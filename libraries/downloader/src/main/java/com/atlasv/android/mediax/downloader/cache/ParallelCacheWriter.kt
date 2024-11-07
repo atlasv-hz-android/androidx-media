@@ -4,7 +4,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
-import com.atlasv.android.mediax.downloader.datasource.getCachedBytes
+import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.CancellationException
@@ -19,7 +19,10 @@ import java.io.InterruptedIOException
  * Created by weiping on 2024/11/5
  */
 class ParallelCacheWriter(
-    private val mediaXCache: MediaXCache, private val uriString: String,
+    private val mediaXCache: MediaXCache,
+    private val uriString: String,
+    private val rangeCountStrategy: RangeCountStrategy,
+    private val contentLength: Long
 ) {
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
@@ -28,32 +31,19 @@ class ParallelCacheWriter(
     private var needDelete: Boolean = false
     suspend fun cache(
         destFile: File,
-        contentLength: Long,
-        rangeCountStrategy: RangeCountStrategy,
         progressListener: ProgressListener?,
     ) {
         destFile.parentFile?.mkdirs()
         val parallelProgressListener = ParallelProgressListener(progressListener)
         coroutineScope {
-            val dataSpecs = createDataSpecs(
-                uriString,
-                contentLength,
-                rangeCountStrategy
-            )
+            val dataSpecs = createDataSpecs()
             jobs = dataSpecs.mapIndexed { index, dataSpec ->
                 async {
                     val dataSource = mediaXCache.createDataSource()
                     val cacheWriter = CacheWriter(
-                        dataSource, dataSpec, null
-                    ) { requestLength, bytesCached, newBytesCached ->
-                        parallelProgressListener.onProgress(
-                            index,
-                            contentLength,
-                            requestLength,
-                            bytesCached,
-                            newBytesCached
-                        )
-                    }
+                        dataSource, dataSpec, null,
+                        parallelProgressListener.asProgressListener(index, contentLength)
+                    )
                     try {
                         cacheWriters.add(cacheWriter)
                         cacheWriter.cache()
@@ -63,37 +53,14 @@ class ParallelCacheWriter(
                             cause
                         )
                     }
-                }.apply {
-                    invokeOnCompletion { cause: Throwable? ->
-                        if (cause == null) {
-                            mediaXLogger?.d { "ParallelCacheWriter job invokeOnCompletion" }
-                        } else {
-                            mediaXLogger?.e(cause) { "ParallelCacheWriter job invokeOnCompletion" }
-                        }
-                    }
                 }
             }
             try {
                 jobs?.awaitAll()
                 saveToDestFile(uriString, destFile)
-                mediaXLogger?.d { "Downloaded to $destFile(${destFile.length()}), url=$uriString" }
             } catch (cause: CancellationException) {
                 if (needDelete) {
-                    mediaXLogger?.w {
-                        "ParallelCacheWriter jobs are deleted, will remove resource(${
-                            mediaXCache.cache.getCachedBytes(
-                                uriString
-                            )
-                        }), key=$uriString"
-                    }
-                    mediaXCache.cache.removeResource(uriString)
-                    mediaXLogger?.w {
-                        "Resource removed,remain size=${
-                            mediaXCache.cache.getCachedBytes(
-                                uriString
-                            )
-                        }, key=$uriString"
-                    }
+                    deleteResource(uriString)
                 } else {
                     mediaXLogger?.d { "ParallelCacheWriter all jobs are canceled" }
                 }
@@ -102,19 +69,21 @@ class ParallelCacheWriter(
         }
     }
 
+    private fun deleteResource(uriString: String) {
+        mediaXLogger?.w { "ParallelCacheWriter jobs are deleted, will remove resource($uriString)" }
+        mediaXCache.cache.removeResourceWithTrack(uriString)
+    }
+
     private fun saveToDestFile(uriString: String, destFile: File) {
         val dataSource = mediaXCache.createDataSource()
         val dataSpec = DataSpec.Builder().setUri(uriString).build()
         dataSource.saveDataSpec(dataSpec, destFile)
+        mediaXLogger?.d { "Downloaded to $destFile(${destFile.length()}), url=$uriString" }
         val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
-        mediaXCache.cache.removeResource(cacheKey)
+        mediaXCache.cache.removeResourceWithTrack(cacheKey)
     }
 
-    private fun createDataSpecs(
-        uriString: String,
-        contentLength: Long,
-        rangeCountStrategy: RangeCountStrategy
-    ): List<DataSpec> {
+    private fun createDataSpecs(): List<DataSpec> {
         val isContentLengthKnown = contentLength > 0
         val rangeCount =
             if (!isContentLengthKnown) 1 else rangeCountStrategy.getRangeCount(contentLength = contentLength)
