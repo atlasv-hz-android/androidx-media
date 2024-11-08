@@ -22,36 +22,40 @@ class ParallelCacheWriter(
     private val mediaXCache: MediaXCache,
     private val uriString: String,
     private val rangeCountStrategy: RangeCountStrategy,
-    private val contentLength: Long
+    private val contentLength: Long,
+    private val destFile: File,
+    progressListener: ProgressListener?
 ) {
+    private val parallelProgressListener = ParallelProgressListener(progressListener)
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
 
     // 是否标记为删除
     private var needDelete: Boolean = false
-    suspend fun cache(
-        destFile: File,
-        progressListener: ProgressListener?,
-    ) {
+
+    fun getProgress(): Float {
+        return parallelProgressListener.getProgress()
+    }
+
+    suspend fun cache() {
         destFile.parentFile?.mkdirs()
-        val parallelProgressListener = ParallelProgressListener(progressListener)
         coroutineScope {
             val dataSpecs = createDataSpecs()
             jobs = dataSpecs.mapIndexed { index, dataSpec ->
                 async {
-                    val dataSource = mediaXCache.createDataSource()
-                    val cacheWriter = CacheWriter(
-                        dataSource, dataSpec, null,
-                        parallelProgressListener.asProgressListener(index, contentLength)
-                    )
+                    val cacheWriter = createRealCacheWriter(index, dataSpec)
                     try {
                         cacheWriters.add(cacheWriter)
                         cacheWriter.cache()
                     } catch (cause: InterruptedIOException) {
+                        mediaXLogger?.w(cause) { "ParallelCacheWriter catch InterruptedIOException" }
                         throw CancellationException(
                             "ParallelCacheWriter canceled by InterruptedIOException",
                             cause
                         )
+                    } catch (cause: Throwable) {
+                        mediaXLogger?.e(cause) { "ParallelCacheWriter catch ${cause.javaClass.simpleName}" }
+                        throw cause
                     }
                 }
             }
@@ -67,6 +71,14 @@ class ParallelCacheWriter(
                 throw cause
             }
         }
+    }
+
+    private fun createRealCacheWriter(index: Int, dataSpec: DataSpec): CacheWriter {
+        val dataSource = mediaXCache.createDataSource()
+        return CacheWriter(
+            dataSource, dataSpec, null,
+            parallelProgressListener.asProgressListener(index, contentLength)
+        )
     }
 
     private fun deleteResource(uriString: String) {

@@ -10,6 +10,10 @@ import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.roundToInt
@@ -20,10 +24,20 @@ import kotlin.system.measureTimeMillis
  */
 @OptIn(UnstableApi::class)
 class MainViewModel : ViewModel() {
+    val progressItems: StateFlow<List<Pair<String, Float>>> = DownloaderAgent.progressMap.map {
+        it.entries.toList().map { entry ->
+            entry.key to entry.value
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     fun testDownload(downloadUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            DownloaderAgent.contentLengthLoader.fetch(ContentRequestStringModel(uriString = downloadUrl))
-            testRangeCount(downloadUrl, 3, 1)
+            kotlin.runCatching {
+                DownloaderAgent.contentLengthLoader.fetch(ContentRequestStringModel(uriString = downloadUrl))
+                testRangeCount(downloadUrl, 3, 1)
+            }.getOrElse {
+                mediaXLogger?.e(it) { "testDownload failed" }
+            }
         }
     }
 
@@ -55,7 +69,7 @@ class MainViewModel : ViewModel() {
                 "download-files/${Uri.parse(downloadUrl).lastPathSegment}"
             ),
             rangeCountStrategy = rangeStrategy,
-            downloadListener = null
+            downloadListener = DownloaderAgent
         )
     }
 }

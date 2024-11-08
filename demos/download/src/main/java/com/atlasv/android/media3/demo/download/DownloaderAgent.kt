@@ -11,7 +11,8 @@ import com.atlasv.android.mediax.downloader.core.SimpleMediaXCacheSupplier
 import com.atlasv.android.mediax.downloader.datasource.ConfigurableUpstreamStrategy
 import com.atlasv.android.mediax.downloader.datasource.OkhttpUpstreamStrategy
 import com.atlasv.android.mediax.downloader.datasource.UpstreamStrategy
-import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import okhttp3.OkHttpClient
 import java.io.File
 
@@ -20,6 +21,7 @@ import java.io.File
  */
 @UnstableApi
 object DownloaderAgent : DownloadListener {
+    val progressMap = MutableStateFlow<Map<String, Float>>(emptyMap())
     private val okHttpClient by lazy {
         OkHttpClient.Builder().build()
     }
@@ -64,6 +66,8 @@ object DownloaderAgent : DownloadListener {
         downloadUrl: String,
         id: String
     ) {
-        mediaXLogger?.d { "onProgress: $bytesCached/${requestLength}(${(bytesCached * 100f / requestLength).toInt()})($downloadUrl)" }
+        progressMap.update {
+            it + (downloadUrl to bytesCached.toFloat() / requestLength)
+        }
     }
 }

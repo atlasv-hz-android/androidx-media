@@ -5,16 +5,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.atlasv.android.media3.demo.download.ui.theme.Androidxmedia3Theme
 
 private const val TEST_URL_VIDEO1 =
@@ -31,9 +35,6 @@ private const val TEST_URL_IMAGE_3 =
 
 private const val TEST_URL_AUDIO_1 =
     "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/audio/guitar_xushi_aigei_com.mp3"
-
-private const val INS_IMAGE1 =
-    "https://scontent-lhr8-1.cdninstagram.com/v/t51.29350-15/464648271_1061991415569752_8942922764679332935_n.webp?se=7&stp=dst-jpg_e35&efg=eyJ2ZW5jb2RlX3RhZyI6ImltYWdlX3VybGdlbi4xMDgweDE5MjAuc2RyLmYyOTM1MC5kZWZhdWx0X2ltYWdlIn0&_nc_ht=scontent-lhr8-1.cdninstagram.com&_nc_cat=108&_nc_ohc=tC9qkneVqXAQ7kNvgEgm3Vt&_nc_gid=2483d986144546b19e9751b7241ada2f&edm=ANmP7GQBAAAA&ccb=7-5&ig_cache_key=MzQ4ODU3MTI2MTczNDI0MTg1Ng%3D%3D.3-ccb7-5&oh=00_AYDxfLs5UeGAUQiI0oUfTJrJKC7obOVNNXubP57Q9Qoxfg&oe=672542C8&_nc_sid=982cc7"
 
 // Head 请求拿不到Content-Length，code=404
 private const val PIXABAY_VIDEO_1 = "https://cdn.pixabay.com/video/2023/01/30/148597-794221559.mp4"
@@ -52,37 +53,46 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val progressItems by viewModel.progressItems.collectAsStateWithLifecycle()
             Androidxmedia3Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
                             .padding(innerPadding)
                             .padding(16.dp)
                     ) {
-                        Greeting(text = "Aliyun", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = TEST_URL_VIDEO1)
+                        item {
+                            Greeting(text = "Aliyun", modifier = Modifier, onClick = {
+                                viewModel.testDownload(downloadUrl = TEST_URL_VIDEO1)
 //                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_1)
 //                            viewModel.testDownload(downloadUrl = TEST_URL_AUDIO_1)
-                        })
+                            })
 
-                        Greeting(text = "Digital Ocean", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = DO_VIDEO1)
-                        })
+                            Greeting(text = "Digital Ocean", modifier = Modifier, onClick = {
+                                viewModel.testDownload(downloadUrl = DO_VIDEO1)
+                            })
 
-                        Greeting(text = "Google Storage", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_3)
-                        })
+                            Greeting(text = "Google Storage", modifier = Modifier, onClick = {
+                                viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_3)
+                            })
 
-                        Greeting(text = "Instagram", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = INS_IMAGE1)
-                        })
-                        Greeting(text = "Pixabay", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = PIXABAY_VIDEO_1)
-                        })
+                            Greeting(text = "Pixabay", modifier = Modifier, onClick = {
+                                viewModel.testDownload(downloadUrl = PIXABAY_VIDEO_1)
+                            })
 
-                        Greeting(text = "X", modifier = Modifier, onClick = {
-                            viewModel.testDownload(downloadUrl = X_VIDEO_1)
-                        })
+                            Greeting(text = "X", modifier = Modifier, onClick = {
+                                viewModel.testDownload(downloadUrl = X_VIDEO_1)
+                            })
+                        }
+                        items(progressItems) {
+                            LinearProgressIndicator(
+                                progress = { it.second },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                gapSize = 0.dp
+                            )
+                        }
                     }
                 }
             }

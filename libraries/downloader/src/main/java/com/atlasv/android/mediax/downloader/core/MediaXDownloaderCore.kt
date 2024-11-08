@@ -31,17 +31,40 @@ class MediaXDownloaderCore(
     ): File {
         val contentLength = contentLengthLoader.getContentLengthOrUnset(uriString = downloadUrl)
         val cacheWriter =
-            ParallelCacheWriter(mediaXCache, downloadUrl, rangeCountStrategy, contentLength)
-        writerMap[downloadUrl] = cacheWriter
-        return try {
-            cacheWriter.cache(
-                destFile = destFile,
-                progressListener = downloadListener?.asProgressListener(downloadUrl, id)
+            createCacheWriter(
+                downloadUrl,
+                id,
+                destFile,
+                rangeCountStrategy,
+                downloadListener,
+                contentLength
             )
+        return try {
+            cacheWriter.cache()
             destFile
         } finally {
             writerMap.remove(downloadUrl)
         }
+    }
+
+    private fun createCacheWriter(
+        downloadUrl: String,
+        id: String,
+        destFile: File,
+        rangeCountStrategy: RangeCountStrategy,
+        downloadListener: DownloadListener?,
+        contentLength: Long
+    ): ParallelCacheWriter {
+        val writer = ParallelCacheWriter(
+            mediaXCache = mediaXCache,
+            uriString = downloadUrl,
+            rangeCountStrategy = rangeCountStrategy,
+            contentLength = contentLength,
+            destFile = destFile,
+            progressListener = downloadListener?.asProgressListener(downloadUrl, id)
+        )
+        writerMap[downloadUrl] = writer
+        return writer
     }
 
     fun cancel(uriString: String, alsoDelete: Boolean = false) {
