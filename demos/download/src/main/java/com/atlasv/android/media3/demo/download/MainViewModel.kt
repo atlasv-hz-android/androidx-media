@@ -12,6 +12,7 @@ import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -24,11 +25,12 @@ import kotlin.system.measureTimeMillis
  */
 @OptIn(UnstableApi::class)
 class MainViewModel : ViewModel() {
-    val progressItems: StateFlow<List<Pair<String, Float>>> = DownloaderAgent.progressMap.map {
-        it.entries.toList().map { entry ->
-            entry.key to entry.value
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val progressItems: StateFlow<List<ProgressItem>> =
+        DownloaderAgent.progressMap.map { progressMap ->
+            val items = progressMap.map { it.value }
+            items
+        }.flowOn(Dispatchers.IO)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun testDownload(downloadUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {

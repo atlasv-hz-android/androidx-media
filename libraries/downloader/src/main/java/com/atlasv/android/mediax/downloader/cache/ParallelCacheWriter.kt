@@ -2,7 +2,7 @@ package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
-import androidx.media3.datasource.cache.CacheWriter.ProgressListener
+import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
@@ -21,12 +21,14 @@ import java.io.InterruptedIOException
 class ParallelCacheWriter(
     private val mediaXCache: MediaXCache,
     private val uriString: String,
+    id: String,
     private val rangeCountStrategy: RangeCountStrategy,
     private val contentLength: Long,
     private val destFile: File,
-    progressListener: ProgressListener?
+    downloadListener: DownloadListener?
 ) {
-    private val parallelProgressListener = ParallelProgressListener(progressListener)
+    private val parallelProgressListener =
+        ParallelProgressListener(uriString = uriString, id = id, downloadListener)
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
 

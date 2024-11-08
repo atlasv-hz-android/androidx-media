@@ -1,13 +1,19 @@
 package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
+import com.atlasv.android.mediax.downloader.core.DownloadListener
+import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by weiping on 2024/11/5
  */
-class ParallelProgressListener(private val callback: ProgressListener?) {
-    private val mergeProgressInfo = ConcurrentHashMap<Int, Pair<Long, Long>>()
+class ParallelProgressListener(
+    private val uriString: String,
+    private val id: String,
+    private val downloadListener: DownloadListener?
+) {
+    private val specProgressInfoMap = ConcurrentHashMap<Int, SpecProgressInfo>()
     private var currentProgress: Float = 0f
 
     fun getProgress(): Float {
@@ -21,34 +27,43 @@ class ParallelProgressListener(private val callback: ProgressListener?) {
         bytesCached: Long,
         newBytesCached: Long
     ) {
-        mergeProgressInfo[index] = mergeProgressInfo[index]?.copy(
-            first = bytesCached, second = requestLength
-        ) ?: (bytesCached to requestLength)
-        val (mergeBytesCached, mergeContentLength) = calcMergeProgress(
+        specProgressInfoMap[index] = specProgressInfoMap[index]?.copy(
+            bytesCached = bytesCached, requestLength = requestLength
+        ) ?: SpecProgressInfo(
+            specIndex = index,
+            requestLength = requestLength,
+            bytesCached = bytesCached
+        )
+        val (_, mergeBytesCached, mergeContentLength) = calcMergeProgress(
+            index,
             contentLength,
-            mergeProgressInfo
+            specProgressInfoMap
         )
         currentProgress =
             if (mergeContentLength > 0) mergeBytesCached.toFloat() / mergeContentLength else 0f
-        callback?.onProgress(
-            mergeContentLength,
-            mergeBytesCached,
-            newBytesCached
+        downloadListener?.onProgress(
+            requestLength = mergeContentLength,
+            bytesCached = mergeBytesCached,
+            newBytesCached = newBytesCached,
+            downloadUrl = uriString,
+            id = id,
+            specProgressInfoMap = specProgressInfoMap
         )
     }
 
     private fun calcMergeProgress(
+        index: Int,
         contentLength: Long,
-        infoMap: Map<Int, Pair<Long, Long>>
-    ): Pair<Long, Long> {
-        val values: Collection<Pair<Long, Long>> = infoMap.values.toList()
+        infoMap: Map<Int, SpecProgressInfo>
+    ): Triple<Int, Long, Long> {
+        val values: Collection<SpecProgressInfo> = infoMap.values.toList()
         val validContentLength = contentLength.takeIf { it > 0 } ?: values.sumOf {
-            it.second
+            it.requestLength
         }
         val mergeBytesCached = values.sumOf {
-            it.first
+            it.bytesCached
         }
-        return mergeBytesCached to validContentLength
+        return Triple(index, mergeBytesCached, validContentLength)
     }
 
     fun asProgressListener(index: Int, contentLength: Long): ProgressListener {

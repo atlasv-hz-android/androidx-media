@@ -61,10 +61,11 @@ class MediaXDownloaderCore(
         val writer = ParallelCacheWriter(
             mediaXCache = mediaXCache,
             uriString = downloadUrl,
+            id = id,
             rangeCountStrategy = rangeCountStrategy,
             contentLength = contentLength,
             destFile = destFile,
-            progressListener = downloadListener?.asProgressListener(downloadUrl, id)
+            downloadListener = downloadListener
         )
         writerMap[downloadUrl] = writer
         return writer

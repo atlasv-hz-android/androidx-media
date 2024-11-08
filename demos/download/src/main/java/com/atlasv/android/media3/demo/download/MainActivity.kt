@@ -5,12 +5,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -18,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.atlasv.android.media3.demo.download.ui.theme.Androidxmedia3Theme
 
@@ -59,7 +66,8 @@ class MainActivity : ComponentActivity() {
                     LazyColumn(
                         modifier = Modifier
                             .padding(innerPadding)
-                            .padding(16.dp)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         item {
                             Greeting(text = "Aliyun", modifier = Modifier, onClick = {
@@ -85,16 +93,53 @@ class MainActivity : ComponentActivity() {
                             })
                         }
                         items(progressItems) {
-                            LinearProgressIndicator(
-                                progress = { it.second },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                gapSize = 0.dp
-                            )
+                            ProgressItemView(it)
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressItemView(item: ProgressItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Text(text = item.downloadUrl, fontSize = 12.sp)
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = "总进度: ${item.bytesCached}/${item.requestLength}(${(item.progress * 100).toInt()}%)",
+                fontSize = 13.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = { item.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                gapSize = 0.dp
+            )
+
+            Spacer(Modifier.height(8.dp))
+            Text(text = "分片进度", fontSize = 13.sp)
+            Spacer(Modifier.height(4.dp))
+            item.specs.forEach { spec ->
+                Text(
+                    text = "${spec.bytesCached}/${spec.requestLength}(${(spec.progress * 100).toInt()}%)",
+                    fontSize = 12.sp
+                )
+                LinearProgressIndicator(
+                    progress = { spec.progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 6.dp),
+                    gapSize = 0.dp
+                )
             }
         }
     }
