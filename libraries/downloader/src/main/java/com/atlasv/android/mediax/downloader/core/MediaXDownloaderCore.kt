@@ -29,6 +29,9 @@ class MediaXDownloaderCore(
         rangeCountStrategy: RangeCountStrategy,
         downloadListener: DownloadListener?
     ): File {
+        if (writerMap[downloadUrl] != null) {
+            throw IllegalStateException("Duplicate task of $downloadUrl")
+        }
         val contentLength = contentLengthLoader.getContentLengthOrUnset(uriString = downloadUrl)
         val cacheWriter =
             createCacheWriter(

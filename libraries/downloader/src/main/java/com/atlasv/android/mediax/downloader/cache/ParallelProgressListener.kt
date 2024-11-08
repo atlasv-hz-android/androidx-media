@@ -1,12 +1,13 @@
 package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by weiping on 2024/11/5
  */
 class ParallelProgressListener(private val callback: ProgressListener?) {
-    private val mergeProgressInfo = mutableMapOf<Int, Pair<Long, Long>>()
+    private val mergeProgressInfo = ConcurrentHashMap<Int, Pair<Long, Long>>()
     private var currentProgress: Float = 0f
 
     fun getProgress(): Float {
