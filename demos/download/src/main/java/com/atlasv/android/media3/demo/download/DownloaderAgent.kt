@@ -3,7 +3,6 @@ package com.atlasv.android.media3.demo.download
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
-import com.atlasv.android.mediax.downloader.api.MediaXDownloadClient
 import com.atlasv.android.mediax.downloader.core.ContentLengthLoader
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCacheSupplier
@@ -34,15 +33,9 @@ object DownloaderAgent : DownloadListener {
     private val mediaXCacheSupplier by lazy {
         createCacheSupplier()
     }
-    private val downloadCore by lazy {
+
+    val downloadCore by lazy {
         MediaXDownloaderCore(mediaXCacheSupplier, contentLengthLoader)
-    }
-    val client by lazy {
-        MediaXDownloadClient(
-            downloadCore = downloadCore,
-            downloadListener = this,
-            listener = null
-        )
     }
 
     private fun createCacheSupplier(): MediaXCacheSupplier {
