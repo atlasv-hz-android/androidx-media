@@ -9,6 +9,7 @@ data class ProgressItem(
     val downloadUrl: String,
     val requestLength: Long,
     val bytesCached: Long,
+    val speedPerSeconds: Long,
     val specs: List<SpecProgressInfo>
 ) {
     val progress = if (requestLength <= 0) 0f else (bytesCached.toFloat() / requestLength)

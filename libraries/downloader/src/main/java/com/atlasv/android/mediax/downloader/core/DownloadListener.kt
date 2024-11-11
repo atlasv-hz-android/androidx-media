@@ -16,6 +16,7 @@ interface DownloadListener {
         requestLength: Long,
         bytesCached: Long,
         newBytesCached: Long,
+        speedPerSeconds: Long,
         downloadUrl: String,
         id: String,
         specProgressInfoMap: Map<Int, SpecProgressInfo>

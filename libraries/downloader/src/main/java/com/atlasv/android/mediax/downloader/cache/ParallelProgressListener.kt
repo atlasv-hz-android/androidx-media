@@ -1,6 +1,7 @@
 package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
+import com.atlasv.android.mediax.downloader.core.CallbackRateLimiter
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
 import java.util.concurrent.ConcurrentHashMap
@@ -15,7 +16,9 @@ class ParallelProgressListener(
 ) {
     private val specProgressInfoMap = ConcurrentHashMap<Int, SpecProgressInfo>()
     private var currentProgress: Float = 0f
-
+    private var totalNewCachedBytes = 0L
+    private var speedPerSeconds = 0L
+    private val callbackRateLimiter = CallbackRateLimiter(intervalMillis = 50)
     fun getProgress(): Float {
         return currentProgress
     }
@@ -27,28 +30,37 @@ class ParallelProgressListener(
         bytesCached: Long,
         newBytesCached: Long
     ) {
-        specProgressInfoMap[index] = specProgressInfoMap[index]?.copy(
-            bytesCached = bytesCached, requestLength = requestLength
-        ) ?: SpecProgressInfo(
-            specIndex = index,
-            requestLength = requestLength,
-            bytesCached = bytesCached
-        )
-        val (_, mergeBytesCached, mergeContentLength) = calcMergeProgress(
-            index,
-            contentLength,
-            specProgressInfoMap
-        )
-        currentProgress =
-            if (mergeContentLength > 0) mergeBytesCached.toFloat() / mergeContentLength else 0f
-        downloadListener?.onProgress(
-            requestLength = mergeContentLength,
-            bytesCached = mergeBytesCached,
-            newBytesCached = newBytesCached,
-            downloadUrl = uriString,
-            id = id,
-            specProgressInfoMap = specProgressInfoMap
-        )
+        val isLastBytes = requestLength in 1..bytesCached
+        totalNewCachedBytes += newBytesCached
+        callbackRateLimiter.checkLimit(forceCheck = isLastBytes) { durationMillis: Long ->
+            if (durationMillis >= 100) {
+                // 计算速度避免极小分母导致极高的峰值
+                speedPerSeconds = totalNewCachedBytes * 1000 / durationMillis
+            }
+            specProgressInfoMap[index] = specProgressInfoMap[index]?.copy(
+                bytesCached = bytesCached, requestLength = requestLength
+            ) ?: SpecProgressInfo(
+                specIndex = index,
+                requestLength = requestLength,
+                bytesCached = bytesCached
+            )
+            val (_, mergeBytesCached, mergeContentLength) = calcMergeProgress(
+                index,
+                contentLength,
+                specProgressInfoMap
+            )
+            currentProgress =
+                if (mergeContentLength > 0) mergeBytesCached.toFloat() / mergeContentLength else 0f
+            downloadListener?.onProgress(
+                requestLength = mergeContentLength,
+                bytesCached = mergeBytesCached,
+                newBytesCached = newBytesCached,
+                speedPerSeconds = speedPerSeconds,
+                downloadUrl = uriString,
+                id = id,
+                specProgressInfoMap = specProgressInfoMap
+            )
+        }
     }
 
     private fun calcMergeProgress(

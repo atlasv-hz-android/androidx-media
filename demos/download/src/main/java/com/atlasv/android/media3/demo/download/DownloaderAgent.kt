@@ -64,6 +64,7 @@ object DownloaderAgent : DownloadListener {
         requestLength: Long,
         bytesCached: Long,
         newBytesCached: Long,
+        speedPerSeconds: Long,
         downloadUrl: String,
         id: String,
         specProgressInfoMap: Map<Int, SpecProgressInfo>
@@ -73,6 +74,7 @@ object DownloaderAgent : DownloadListener {
                 downloadUrl = downloadUrl,
                 requestLength = requestLength,
                 bytesCached = bytesCached,
+                speedPerSeconds = speedPerSeconds,
                 specs = specProgressInfoMap.values.toList().sortedBy { it.specIndex }
             ))
         }

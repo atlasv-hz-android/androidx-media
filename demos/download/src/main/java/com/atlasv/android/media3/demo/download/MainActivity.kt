@@ -1,6 +1,7 @@
 package com.atlasv.android.media3.demo.download
 
 import android.os.Bundle
+import android.text.format.Formatter
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -113,7 +114,12 @@ private fun ProgressItemView(item: ProgressItem) {
             Spacer(Modifier.height(4.dp))
 
             Text(
-                text = "总进度: ${item.bytesCached}/${item.requestLength}(${(item.progress * 100).toInt()}%)",
+                text = "总进度: ${item.bytesCached}/${item.requestLength}(${(item.progress * 100).toInt()}%)(${
+                    Formatter.formatFileSize(
+                        App.app,
+                        item.speedPerSeconds
+                    )
+                })",
                 fontSize = 13.sp
             )
             Spacer(Modifier.height(4.dp))
