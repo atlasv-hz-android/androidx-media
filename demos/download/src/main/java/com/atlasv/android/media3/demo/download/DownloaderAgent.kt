@@ -44,20 +44,20 @@ object DownloaderAgent : DownloadListener {
             mediaXCacheSupplier,
             contentLengthLoader,
             perfTracker = object : DownloadPerfTracker {
-                override fun trackDownloadSpeed(bytesPerSecond: Long) {
-                    mediaXLogger?.d { "PerfTrack: speed=${bytesPerSecond / 1024}" }
+                override fun trackDownloadSpeed(bytesPerSecond: Long, rangeCount: Int) {
+                    mediaXLogger?.d { "PerfTrack: speed=${bytesPerSecond / 1024}, rangeCount=$rangeCount" }
                 }
 
                 override fun trackDownloadStart() {
                     mediaXLogger?.d { "PerfTrack: trackDownloadStart" }
                 }
 
-                override fun trackDownloadSuccess(fileSize: Long) {
-                    mediaXLogger?.d { "PerfTrack: trackDownloadSuccess: $fileSize" }
+                override fun trackDownloadSuccess(rangeCount: Int) {
+                    mediaXLogger?.d { "PerfTrack: trackDownloadSuccess: rangeCount=$rangeCount" }
                 }
 
-                override fun trackSaveSuccess() {
-                    mediaXLogger?.d { "PerfTrack: trackSaveSuccess" }
+                override fun trackSaveSuccess(fileSize: Long) {
+                    mediaXLogger?.d { "PerfTrack: trackSaveSuccess, fileSize=$fileSize" }
                 }
 
                 override fun trackDownloadFailed(cause: Throwable) {

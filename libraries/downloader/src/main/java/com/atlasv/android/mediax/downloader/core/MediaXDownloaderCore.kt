@@ -3,6 +3,7 @@ package com.atlasv.android.mediax.downloader.core
 import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
+import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -14,7 +15,7 @@ class MediaXDownloaderCore(
     mediaXCacheSupplier: MediaXCacheSupplier,
     private val contentLengthLoader: ContentLengthLoader,
     private val perfTracker: DownloadPerfTracker?,
-    private val defaultRangeCountStrategy: RangeCountStrategy
+    private val defaultRangeCountStrategy: RangeCountStrategy = SimpleRangeStrategy.SingleRangeStrategy
 ) {
     private val writerMap = ConcurrentHashMap<String, ParallelCacheWriter>()
     private val mediaXCache: MediaXCache by lazy {

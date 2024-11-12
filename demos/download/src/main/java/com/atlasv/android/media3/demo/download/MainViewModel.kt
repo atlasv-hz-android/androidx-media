@@ -47,8 +47,6 @@ class MainViewModel : ViewModel() {
         val avgTime = (1..testCount).map {
             measureTimeMillis {
                 performDownload(downloadUrl, SimpleRangeStrategy(rangeCount))
-            }.also {
-                mediaXLogger?.d { "rangeCount: $rangeCount, cost time: $it millis" }
             }
         }.let {
             val filteredList = if (it.size >= 5) {
@@ -59,7 +57,6 @@ class MainViewModel : ViewModel() {
             mediaXLogger?.d { "Calc list: $it -> $filteredList" }
             filteredList
         }.average().roundToInt()
-        mediaXLogger?.d { "rangeCount: $rangeCount, avg time: $avgTime millis" }
     }
 
     private suspend fun performDownload(downloadUrl: String, rangeStrategy: SimpleRangeStrategy) {

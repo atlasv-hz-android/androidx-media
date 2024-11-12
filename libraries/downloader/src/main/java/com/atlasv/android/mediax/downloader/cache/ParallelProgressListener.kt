@@ -27,6 +27,7 @@ class ParallelProgressListener(
 
     private fun onProgressAtIndex(
         index: Int,
+        rangeCount: Int,
         contentLength: Long,
         requestLength: Long,
         bytesCached: Long,
@@ -56,7 +57,7 @@ class ParallelProgressListener(
 
             val isAllRangeComplete = mergeContentLength in 1..mergeBytesCached
             if (isAllRangeComplete) {
-                perfTracker?.trackDownloadSpeed(bytesPerSecond)
+                perfTracker?.trackDownloadSpeed(bytesPerSecond, rangeCount)
             }
 
             downloadListener?.onProgress(
@@ -86,10 +87,11 @@ class ParallelProgressListener(
         return Triple(index, mergeBytesCached, validContentLength)
     }
 
-    fun asProgressListener(index: Int, contentLength: Long): ProgressListener {
+    fun asProgressListener(index: Int, rangeCount: Int, contentLength: Long): ProgressListener {
         return ProgressListener { requestLength, bytesCached, newBytesCached ->
             this@ParallelProgressListener.onProgressAtIndex(
                 index,
+                rangeCount,
                 contentLength,
                 requestLength,
                 bytesCached,

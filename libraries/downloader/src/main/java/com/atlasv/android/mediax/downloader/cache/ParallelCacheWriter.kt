@@ -45,9 +45,10 @@ class ParallelCacheWriter(
         destFile.parentFile?.mkdirs()
         coroutineScope {
             val dataSpecs = createDataSpecs()
+            val rangeCount = dataSpecs.size
             jobs = dataSpecs.mapIndexed { index, dataSpec ->
                 async {
-                    val cacheWriter = createRealCacheWriter(index, dataSpec)
+                    val cacheWriter = createRealCacheWriter(index, rangeCount, dataSpec)
                     try {
                         cacheWriters.add(cacheWriter)
                         cacheWriter.cache()
@@ -66,9 +67,9 @@ class ParallelCacheWriter(
             try {
                 perfTracker?.trackDownloadStart()
                 jobs?.awaitAll()
-                perfTracker?.trackDownloadSuccess(destFile.length())
+                perfTracker?.trackDownloadSuccess(rangeCount)
                 saveToDestFile(uriString, destFile)
-                perfTracker?.trackSaveSuccess()
+                perfTracker?.trackSaveSuccess(destFile.length())
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
@@ -87,11 +88,15 @@ class ParallelCacheWriter(
         }
     }
 
-    private fun createRealCacheWriter(index: Int, dataSpec: DataSpec): CacheWriter {
+    private fun createRealCacheWriter(
+        index: Int,
+        rangeCount: Int,
+        dataSpec: DataSpec
+    ): CacheWriter {
         val dataSource = mediaXCache.createDataSource()
         return CacheWriter(
             dataSource, dataSpec, null,
-            parallelProgressListener.asProgressListener(index, contentLength)
+            parallelProgressListener.asProgressListener(index, rangeCount, contentLength)
         )
     }
 

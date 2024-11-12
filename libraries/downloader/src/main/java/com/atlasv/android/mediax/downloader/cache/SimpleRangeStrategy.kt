@@ -7,4 +7,8 @@ class SimpleRangeStrategy(private val rangeCount: Int) : RangeCountStrategy {
     override fun getRangeCount(contentLength: Long): Int {
         return rangeCount
     }
+
+    companion object {
+        val SingleRangeStrategy = SimpleRangeStrategy(1)
+    }
 }
