@@ -3,6 +3,7 @@ package com.atlasv.android.media3.demo.download
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
+import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.ContentLengthLoader
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCacheSupplier
@@ -12,6 +13,7 @@ import com.atlasv.android.mediax.downloader.datasource.ConfigurableUpstreamStrat
 import com.atlasv.android.mediax.downloader.datasource.OkhttpUpstreamStrategy
 import com.atlasv.android.mediax.downloader.datasource.UpstreamStrategy
 import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
+import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import okhttp3.OkHttpClient
@@ -38,7 +40,30 @@ object DownloaderAgent : DownloadListener {
     }
 
     val downloadCore by lazy {
-        MediaXDownloaderCore(mediaXCacheSupplier, contentLengthLoader)
+        MediaXDownloaderCore(
+            mediaXCacheSupplier,
+            contentLengthLoader,
+            perfTracker = object : DownloadPerfTracker {
+                override fun trackDownloadSpeed(bytesPerSecond: Long) {
+                    mediaXLogger?.d { "PerfTrack: speed=${bytesPerSecond / 1024}" }
+                }
+
+                override fun trackDownloadStart() {
+                    mediaXLogger?.d { "PerfTrack: trackDownloadStart" }
+                }
+
+                override fun trackDownloadSuccess(fileSize: Long) {
+                    mediaXLogger?.d { "PerfTrack: trackDownloadSuccess: $fileSize" }
+                }
+
+                override fun trackSaveSuccess() {
+                    mediaXLogger?.d { "PerfTrack: trackSaveSuccess" }
+                }
+
+                override fun trackDownloadFailed(cause: Throwable) {
+                    mediaXLogger?.e(cause) { "PerfTrack: trackDownloadFailed" }
+                }
+            })
     }
 
     private fun createCacheSupplier(): MediaXCacheSupplier {

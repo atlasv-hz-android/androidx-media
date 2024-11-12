@@ -1,6 +1,7 @@
 package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
+import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.CallbackRateLimiter
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
@@ -12,12 +13,13 @@ import java.util.concurrent.ConcurrentHashMap
 class ParallelProgressListener(
     private val uriString: String,
     private val id: String,
-    private val downloadListener: DownloadListener?
+    private val downloadListener: DownloadListener?,
+    private val perfTracker: DownloadPerfTracker?
 ) {
     private val specProgressInfoMap = ConcurrentHashMap<Int, SpecProgressInfo>()
     private var currentProgress: Float = 0f
     private var totalNewCachedBytes = 0L
-    private var speedPerSeconds = 0L
+    private var bytesPerSecond = 0L
     private val callbackRateLimiter = CallbackRateLimiter(intervalMillis = 50)
     fun getProgress(): Float {
         return currentProgress
@@ -35,7 +37,7 @@ class ParallelProgressListener(
         callbackRateLimiter.checkLimit(forceCheck = isLastBytes) { durationMillis: Long ->
             if (durationMillis >= 100) {
                 // 计算速度避免极小分母导致极高的峰值
-                speedPerSeconds = totalNewCachedBytes * 1000 / durationMillis
+                bytesPerSecond = totalNewCachedBytes * 1000 / durationMillis
             }
             specProgressInfoMap[index] = specProgressInfoMap[index]?.copy(
                 bytesCached = bytesCached, requestLength = requestLength
@@ -51,11 +53,17 @@ class ParallelProgressListener(
             )
             currentProgress =
                 if (mergeContentLength > 0) mergeBytesCached.toFloat() / mergeContentLength else 0f
+
+            val isAllRangeComplete = mergeContentLength in 1..mergeBytesCached
+            if (isAllRangeComplete) {
+                perfTracker?.trackDownloadSpeed(bytesPerSecond)
+            }
+
             downloadListener?.onProgress(
                 requestLength = mergeContentLength,
                 bytesCached = mergeBytesCached,
                 newBytesCached = newBytesCached,
-                speedPerSeconds = speedPerSeconds,
+                speedPerSeconds = bytesPerSecond,
                 downloadUrl = uriString,
                 id = id,
                 specProgressInfoMap = specProgressInfoMap

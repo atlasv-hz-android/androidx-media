@@ -2,6 +2,7 @@ package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
+import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
@@ -25,10 +26,11 @@ class ParallelCacheWriter(
     private val rangeCountStrategy: RangeCountStrategy,
     private val contentLength: Long,
     private val destFile: File,
-    downloadListener: DownloadListener?
+    downloadListener: DownloadListener?,
+    private val perfTracker: DownloadPerfTracker?
 ) {
     private val parallelProgressListener =
-        ParallelProgressListener(uriString = uriString, id = id, downloadListener)
+        ParallelProgressListener(uriString = uriString, id = id, downloadListener, perfTracker)
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
 
@@ -62,14 +64,24 @@ class ParallelCacheWriter(
                 }
             }
             try {
+                perfTracker?.trackDownloadStart()
                 jobs?.awaitAll()
+                perfTracker?.trackDownloadSuccess(destFile.length())
                 saveToDestFile(uriString, destFile)
+                perfTracker?.trackSaveSuccess()
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
                 } else {
                     mediaXLogger?.d { "ParallelCacheWriter all jobs are canceled" }
                 }
+                val realReason = cause.cause
+                if (realReason != null) {
+                    perfTracker?.trackDownloadFailed(realReason)
+                }
+                throw cause
+            } catch (cause: Throwable) {
+                perfTracker?.trackDownloadFailed(cause)
                 throw cause
             }
         }
