@@ -1,9 +1,11 @@
 package com.atlasv.android.mediax.downloader.core
 
+import androidx.media3.common.C
 import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
+import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -36,13 +38,17 @@ class MediaXDownloaderCore(
         if (writerMap[downloadUrl] != null) {
             throw IllegalStateException("Duplicate task of $downloadUrl")
         }
-        val contentLength = contentLengthLoader.getContentLengthOrUnset(uriString = downloadUrl)
+        val targetRangeCountStrategy = rangeCountStrategy ?: defaultRangeCountStrategy
+        val contentLength =
+            if (targetRangeCountStrategy.isSingleRange()) C.LENGTH_UNSET.toLong() else contentLengthLoader.getContentLengthOrUnset(
+                uriString = downloadUrl
+            )
         val cacheWriter =
             createCacheWriter(
                 downloadUrl,
                 id,
                 destFile,
-                rangeCountStrategy ?: defaultRangeCountStrategy,
+                targetRangeCountStrategy,
                 downloadListener,
                 contentLength
             )

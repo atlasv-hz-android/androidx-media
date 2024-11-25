@@ -3,7 +3,7 @@ package com.atlasv.android.mediax.downloader.cache
 /**
  * Created by weiping on 2024/11/5
  */
-class SimpleRangeStrategy(private val rangeCount: Int) : RangeCountStrategy {
+class SimpleRangeStrategy(val rangeCount: Int) : RangeCountStrategy {
     override fun getRangeCount(contentLength: Long): Int {
         return rangeCount
     }
@@ -11,4 +11,8 @@ class SimpleRangeStrategy(private val rangeCount: Int) : RangeCountStrategy {
     companion object {
         val SingleRangeStrategy = SimpleRangeStrategy(1)
     }
+}
+
+fun RangeCountStrategy.isSingleRange(): Boolean {
+    return (this is SimpleRangeStrategy) && this.rangeCount == 1
 }
