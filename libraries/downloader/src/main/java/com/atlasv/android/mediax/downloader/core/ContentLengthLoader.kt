@@ -6,8 +6,8 @@ import com.atlasv.android.loader.fetch.ResourceContentFetcher
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import okhttp3.OkHttpClient
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by weiping on 2024/8/6
@@ -18,15 +18,15 @@ class ContentLengthLoader(okhttpClient: OkHttpClient) :
         validPredicate = { it > 0 }) {
     override val fetchers: List<ResourceContentFetcher<ContentRequestStringModel, Long>> =
         listOf(ContentLengthFetcher(okhttpClient))
+    private val _resultMap = ConcurrentHashMap<String, Long>()
     val resultMap = MutableStateFlow<Map<String, Long>>(emptyMap())
     suspend fun batchFetch(urls: Set<String>) {
         coroutineScope {
             urls.forEach { uriString ->
                 val contentLength = fetch(ContentRequestStringModel(uriString = uriString)).result
                 contentLength?.also {
-                    resultMap.update {
-                        it + (uriString to contentLength)
-                    }
+                    _resultMap[uriString] = contentLength
+                    resultMap.value = _resultMap.toMap()
                 }
             }
         }
