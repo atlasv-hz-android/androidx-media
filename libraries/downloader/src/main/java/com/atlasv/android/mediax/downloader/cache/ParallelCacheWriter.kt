@@ -53,13 +53,13 @@ class ParallelCacheWriter(
                         cacheWriters.add(cacheWriter)
                         cacheWriter.cache()
                     } catch (cause: InterruptedIOException) {
-                        mediaXLogger?.w(cause) { "ParallelCacheWriter catch InterruptedIOException" }
+                        mediaXLogger?.w(cause) { "ParallelCacheWriter catch InterruptedIOException($uriString)" }
                         throw CancellationException(
                             "ParallelCacheWriter canceled by InterruptedIOException",
                             cause
                         )
                     } catch (cause: Throwable) {
-                        mediaXLogger?.e(cause) { "ParallelCacheWriter catch ${cause.javaClass.simpleName}" }
+                        mediaXLogger?.e(cause) { "ParallelCacheWriter catch ${cause.javaClass.simpleName}($uriString)" }
                         throw cause
                     }
                 }
@@ -74,7 +74,7 @@ class ParallelCacheWriter(
                 if (needDelete) {
                     deleteResource(uriString)
                 } else {
-                    mediaXLogger?.d { "ParallelCacheWriter all jobs are canceled" }
+                    mediaXLogger?.d { "ParallelCacheWriter all jobs are canceled($uriString)" }
                 }
                 val realReason = cause.cause
                 if (realReason != null) {
@@ -141,7 +141,7 @@ class ParallelCacheWriter(
                 it.cancel()
             }
         } catch (cause: Throwable) {
-            mediaXLogger?.e(cause) { "ParallelCacheWriter cancel exception occurred" }
+            mediaXLogger?.e(cause) { "ParallelCacheWriter cancel exception occurred($uriString)" }
         }
     }
 }
