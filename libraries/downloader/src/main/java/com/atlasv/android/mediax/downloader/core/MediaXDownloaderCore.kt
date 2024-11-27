@@ -7,6 +7,7 @@ import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
+import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -83,6 +84,12 @@ class MediaXDownloaderCore(
     }
 
     fun cancel(uriString: String, alsoDelete: Boolean = false) {
-        writerMap[uriString]?.cancel(alsoDelete = alsoDelete)
+        val writer = writerMap[uriString]
+        if (writer != null) {
+            writer.cancel(alsoDelete = alsoDelete)
+        } else if (alsoDelete) {
+            // 暂停状态用户删除下载任务，需要走这个逻辑
+            mediaXCache.cache.removeResourceWithTrack(uriString)
+        }
     }
 }
