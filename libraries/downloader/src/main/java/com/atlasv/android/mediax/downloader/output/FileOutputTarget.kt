@@ -8,9 +8,16 @@ import java.io.OutputStream
  * Created by weiping on 2024/11/28
  */
 class FileOutputTarget(private val targetFileSupplier: () -> File) : OutputTarget {
+    private val targetFile by lazy {
+        targetFileSupplier()
+    }
+
     override fun getOutputStream(): OutputStream {
-        val targetFile = targetFileSupplier()
         targetFile.parentFile?.mkdirs()
         return FileOutputStream(targetFile)
+    }
+
+    override fun toString(): String {
+        return targetFile.absolutePath
     }
 }

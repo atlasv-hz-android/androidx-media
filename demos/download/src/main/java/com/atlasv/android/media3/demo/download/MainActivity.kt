@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.atlasv.android.media3.demo.download.ui.theme.Androidxmedia3Theme
+import com.atlasv.android.mediax.downloader.output.DownloadResult
 
 private const val TEST_URL_VIDEO1 =
     "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/video/birds-red-crowned-cranes-cranes-219862_tiny.mp4"
@@ -61,7 +63,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val progressItems by viewModel.progressItems.collectAsStateWithLifecycle()
+            val downloadItems by viewModel.downloadItems.collectAsStateWithLifecycle()
             Androidxmedia3Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     LazyColumn(
@@ -93,7 +95,7 @@ class MainActivity : ComponentActivity() {
                                 viewModel.testDownload(downloadUrl = X_VIDEO_1)
                             })
                         }
-                        items(progressItems) {
+                        items(downloadItems) {
                             ProgressItemView(it)
                         }
                     }
@@ -104,50 +106,71 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun ProgressItemView(item: ProgressItem) {
+private fun ProgressItemView(progressItemWithDownloadResult: Pair<ProgressItem, DownloadResult?>) {
+    val (progressItem, downloadResult) = progressItemWithDownloadResult
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            Text(text = item.downloadUrl, fontSize = 12.sp)
+            Text(text = progressItem.downloadUrl, fontSize = 12.sp)
             Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = "总进度: ${item.bytesCached}/${item.requestLength}(${(item.progress * 100).toInt()}%)(${
-                    Formatter.formatFileSize(
-                        App.app,
-                        item.speedPerSeconds
-                    )
-                })",
-                fontSize = 13.sp
-            )
-            Spacer(Modifier.height(4.dp))
-            LinearProgressIndicator(
-                progress = { item.progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                gapSize = 0.dp
-            )
-
-            Spacer(Modifier.height(8.dp))
-            Text(text = "分片进度", fontSize = 13.sp)
-            Spacer(Modifier.height(4.dp))
-            item.specs.forEach { spec ->
-                Text(
-                    text = "${spec.bytesCached}/${spec.requestLength}(${(spec.progress * 100).toInt()}%)",
-                    fontSize = 12.sp
-                )
-                LinearProgressIndicator(
-                    progress = { spec.progress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 6.dp),
-                    gapSize = 0.dp
-                )
-            }
+            DownloadResultView(downloadResult)
+            MainProgress(progressItem)
+            HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+            RangeProgress(progressItem)
         }
+    }
+}
+
+@Composable
+private fun DownloadResultView(downloadResult: DownloadResult?) {
+    downloadResult ?: return
+    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+    Text(
+        "下载完成（${downloadResult.contentLength} bytes）\n${downloadResult.outputTarget}",
+        fontSize = 12.sp
+    )
+    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+}
+
+@Composable
+private fun MainProgress(progressItem: ProgressItem) {
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = "总进度: ${progressItem.bytesCached}/${progressItem.requestLength}(${(progressItem.progress * 100).toInt()}%)\n下载速度：${
+            Formatter.formatFileSize(
+                App.app,
+                progressItem.speedPerSeconds
+            ) + "/s"
+        }",
+        fontSize = 13.sp
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    LinearProgressIndicator(
+        progress = { progressItem.progress },
+        modifier = Modifier.fillMaxWidth(),
+        gapSize = 0.dp
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+private fun RangeProgress(progressItem: ProgressItem) {
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(text = "分片进度", fontSize = 13.sp)
+    Spacer(Modifier.height(4.dp))
+    progressItem.specs.forEach { spec ->
+        Text(
+            text = "${spec.bytesCached}/${spec.requestLength}(${(spec.progress * 100).toInt()}%)",
+            fontSize = 12.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { spec.progress },
+            modifier = Modifier.fillMaxWidth(),
+            gapSize = 0.dp
+        )
     }
 }
 

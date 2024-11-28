@@ -8,6 +8,7 @@ import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
+import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
 import java.util.concurrent.ConcurrentHashMap
 
@@ -35,7 +36,7 @@ class MediaXDownloaderCore(
         outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy? = null,
         downloadListener: DownloadListener?
-    ): OutputTarget? {
+    ): DownloadResult? {
         if (writerMap[downloadUrl] != null) {
             throw IllegalStateException("Duplicate task of $downloadUrl")
         }
@@ -55,7 +56,7 @@ class MediaXDownloaderCore(
             )
         return try {
             cacheWriter.cache()
-            outputTarget
+            DownloadResult(downloadUrl, outputTarget, contentLength)
         } finally {
             writerMap.remove(downloadUrl)
         }

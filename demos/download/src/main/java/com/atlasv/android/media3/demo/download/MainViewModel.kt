@@ -8,14 +8,16 @@ import androidx.media3.common.util.UnstableApi
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
+import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.FileOutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.math.roundToInt
@@ -26,10 +28,13 @@ import kotlin.system.measureTimeMillis
  */
 @OptIn(UnstableApi::class)
 class MainViewModel : ViewModel() {
-    val progressItems: StateFlow<List<ProgressItem>> =
-        DownloaderAgent.progressMap.map { progressMap ->
-            val items = progressMap.map { it.value }
-            items
+    private val downloadResultMap = MutableStateFlow<Map<String, DownloadResult>>(emptyMap())
+    val downloadItems =
+        combine(downloadResultMap, DownloaderAgent.progressMap) { downloadResultMap, progressMap ->
+            val progressItems = progressMap.map { it.value }
+            progressItems.map {
+                it to downloadResultMap[it.downloadUrl]
+            }
         }.flowOn(Dispatchers.IO)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -74,6 +79,10 @@ class MainViewModel : ViewModel() {
             ),
             rangeCountStrategy = rangeStrategy,
             downloadListener = DownloaderAgent
-        )
+        )?.also { result ->
+            downloadResultMap.update {
+                it + (result.downloadUrl to result)
+            }
+        }
     }
 }
