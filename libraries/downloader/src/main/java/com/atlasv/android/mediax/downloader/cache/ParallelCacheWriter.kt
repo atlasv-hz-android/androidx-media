@@ -5,15 +5,16 @@ import androidx.media3.datasource.cache.CacheWriter
 import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
+import com.atlasv.android.mediax.downloader.datasource.getContentLength
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import java.io.File
 import java.io.InterruptedIOException
 
 /**
@@ -25,7 +26,7 @@ class ParallelCacheWriter(
     id: String,
     private val rangeCountStrategy: RangeCountStrategy,
     private val contentLength: Long,
-    private val destFile: File,
+    private val outputTarget: OutputTarget,
     downloadListener: DownloadListener?,
     private val perfTracker: DownloadPerfTracker?
 ) {
@@ -42,7 +43,6 @@ class ParallelCacheWriter(
     }
 
     suspend fun cache() {
-        destFile.parentFile?.mkdirs()
         coroutineScope {
             val dataSpecs = createDataSpecs()
             val rangeCount = dataSpecs.size
@@ -68,8 +68,8 @@ class ParallelCacheWriter(
                 perfTracker?.trackDownloadStart()
                 jobs?.awaitAll()
                 perfTracker?.trackDownloadSuccess(rangeCount)
-                saveToDestFile(uriString, destFile)
-                perfTracker?.trackSaveSuccess(destFile.length())
+                val fileLength = saveToOutputStream(uriString, outputTarget)
+                perfTracker?.trackSaveSuccess(fileLength)
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
@@ -105,13 +105,17 @@ class ParallelCacheWriter(
         mediaXCache.cache.removeResourceWithTrack(uriString)
     }
 
-    private fun saveToDestFile(uriString: String, destFile: File) {
+    private fun saveToOutputStream(
+        uriString: String,
+        outputTarget: OutputTarget
+    ): Long {
         val dataSource = mediaXCache.createDataSource()
         val dataSpec = DataSpec.Builder().setUri(uriString).build()
-        dataSource.saveDataSpec(dataSpec, destFile)
-        mediaXLogger?.d { "Downloaded to $destFile(${destFile.length()}), url=$uriString" }
+        dataSource.saveDataSpec(dataSpec, outputTarget)
         val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
+        val contentLength = mediaXCache.cache.getContentLength(uriString)
         mediaXCache.cache.removeResourceWithTrack(cacheKey)
+        return contentLength
     }
 
     private fun createDataSpecs(): List<DataSpec> {

@@ -8,9 +8,8 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.ContentMetadata
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
-import java.io.File
-import java.io.FileOutputStream
 
 /**
  * Created by weiping on 2024/9/8
@@ -19,28 +18,25 @@ import java.io.FileOutputStream
 
 @OptIn(UnstableApi::class)
 fun DataSource.saveDataSpec(
-    dataSpec: DataSpec, destFile: File,
+    dataSpec: DataSpec, outputTarget: OutputTarget,
     temporaryBuffer: ByteArray = ByteArray(
         CacheWriter.DEFAULT_BUFFER_SIZE_BYTES
     )
 ) {
-    destFile.parentFile?.mkdirs()
-    val tmpFile = File(destFile.parentFile, destFile.name + ".tmp")
-    val fos = FileOutputStream(tmpFile)
+    val outputStream = outputTarget.getOutputStream()
     var bytesRead = 0
-    try {
-        this.open(dataSpec)
-        while (bytesRead != C.RESULT_END_OF_INPUT) {
-            bytesRead = this.read(temporaryBuffer, 0, temporaryBuffer.size)
-            if (bytesRead != C.RESULT_END_OF_INPUT) {
-                fos.write(temporaryBuffer, 0, bytesRead)
+    outputStream.use {
+        try {
+            this.open(dataSpec)
+            while (bytesRead != C.RESULT_END_OF_INPUT) {
+                bytesRead = this.read(temporaryBuffer, 0, temporaryBuffer.size)
+                if (bytesRead != C.RESULT_END_OF_INPUT) {
+                    outputStream.write(temporaryBuffer, 0, bytesRead)
+                }
             }
+        } finally {
+            this.close()
         }
-        tmpFile.renameTo(destFile)
-    } finally {
-        fos.close()
-        this.close()
-        tmpFile.delete()
     }
 }
 

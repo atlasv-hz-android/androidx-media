@@ -8,7 +8,7 @@ import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
-import java.io.File
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -32,10 +32,10 @@ class MediaXDownloaderCore(
     suspend fun download(
         downloadUrl: String,
         id: String,
-        destFile: File,
+        outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy? = null,
         downloadListener: DownloadListener?
-    ): File {
+    ): OutputTarget? {
         if (writerMap[downloadUrl] != null) {
             throw IllegalStateException("Duplicate task of $downloadUrl")
         }
@@ -48,14 +48,14 @@ class MediaXDownloaderCore(
             createCacheWriter(
                 downloadUrl,
                 id,
-                destFile,
+                outputTarget = outputTarget,
                 targetRangeCountStrategy,
                 downloadListener,
                 contentLength
             )
         return try {
             cacheWriter.cache()
-            destFile
+            outputTarget
         } finally {
             writerMap.remove(downloadUrl)
         }
@@ -64,7 +64,7 @@ class MediaXDownloaderCore(
     private fun createCacheWriter(
         downloadUrl: String,
         id: String,
-        destFile: File,
+        outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy,
         downloadListener: DownloadListener?,
         contentLength: Long
@@ -75,7 +75,7 @@ class MediaXDownloaderCore(
             id = id,
             rangeCountStrategy = rangeCountStrategy,
             contentLength = contentLength,
-            destFile = destFile,
+            outputTarget = outputTarget,
             downloadListener = downloadListener,
             perfTracker = perfTracker
         )

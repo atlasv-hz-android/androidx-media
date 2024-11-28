@@ -8,6 +8,7 @@ import androidx.media3.common.util.UnstableApi
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
+import com.atlasv.android.mediax.downloader.output.FileOutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -63,9 +64,13 @@ class MainViewModel : ViewModel() {
         DownloaderAgent.downloadCore.download(
             downloadUrl = downloadUrl,
             id = downloadUrl,
-            destFile = File(
-                appContext.getExternalFilesDir(null),
-                "download-files/${Uri.parse(downloadUrl).lastPathSegment}"
+            outputTarget = FileOutputTarget(
+                targetFileSupplier = {
+                    File(
+                        appContext.getExternalFilesDir(null),
+                        "download-files/${Uri.parse(downloadUrl).lastPathSegment}"
+                    )
+                }
             ),
             rangeCountStrategy = rangeStrategy,
             downloadListener = DownloaderAgent
