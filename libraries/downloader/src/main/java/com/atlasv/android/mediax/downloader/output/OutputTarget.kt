@@ -7,4 +7,5 @@ import java.io.OutputStream
  */
 interface OutputTarget {
     fun getOutputStream(): OutputStream
+    fun onSucceed()
 }

@@ -20,4 +20,8 @@ class FileOutputTarget(private val targetFileSupplier: () -> File) : OutputTarge
     override fun toString(): String {
         return targetFile.absolutePath
     }
+
+    override fun onSucceed() {
+        // do nothing
+    }
 }

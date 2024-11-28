@@ -34,6 +34,7 @@ fun DataSource.saveDataSpec(
                     outputStream.write(temporaryBuffer, 0, bytesRead)
                 }
             }
+            outputTarget.onSucceed()
         } finally {
             this.close()
         }

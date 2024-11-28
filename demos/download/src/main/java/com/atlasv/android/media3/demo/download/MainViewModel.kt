@@ -1,6 +1,7 @@
 package com.atlasv.android.media3.demo.download
 
 import android.net.Uri
+import android.os.Build
 import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,9 +9,12 @@ import androidx.media3.common.util.UnstableApi
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
 import com.atlasv.android.loader.request.ContentRequestStringModel
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
+import com.atlasv.android.mediax.downloader.output.ContentUriOutputTarget
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.FileOutputTarget
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
+import com.google.common.net.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -49,6 +53,29 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    private fun createOutputTarget(downloadUrl: String): OutputTarget {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentUriOutputTarget(
+                appContext = App.app,
+                downloadUrl = downloadUrl,
+                relativePath = "DemoFiles",
+                mediaType = MediaType.MP4_VIDEO, // TODO 根据实际解析结果来传
+                destNameCreator = {
+                    "${System.currentTimeMillis()}-${Uri.parse(downloadUrl).lastPathSegment}"
+                }
+            )
+        } else {
+            FileOutputTarget(
+                targetFileSupplier = {
+                    File(
+                        appContext.getExternalFilesDir(null),
+                        "download-files/${Uri.parse(downloadUrl).lastPathSegment}"
+                    )
+                }
+            )
+        }
+    }
+
     private suspend fun testRangeCount(downloadUrl: String, rangeCount: Int, testCount: Int) {
         val avgTime = (1..testCount).map {
             measureTimeMillis {
@@ -69,14 +96,7 @@ class MainViewModel : ViewModel() {
         DownloaderAgent.downloadCore.download(
             downloadUrl = downloadUrl,
             id = downloadUrl,
-            outputTarget = FileOutputTarget(
-                targetFileSupplier = {
-                    File(
-                        appContext.getExternalFilesDir(null),
-                        "download-files/${Uri.parse(downloadUrl).lastPathSegment}"
-                    )
-                }
-            ),
+            outputTarget = createOutputTarget(downloadUrl),
             rangeCountStrategy = rangeStrategy,
             downloadListener = DownloaderAgent
         )?.also { result ->
