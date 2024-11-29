@@ -9,6 +9,8 @@ import com.atlasv.android.mediax.downloader.datasource.getContentLength
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
 import com.atlasv.android.mediax.downloader.output.OutputTarget
+import com.atlasv.android.mediax.downloader.exception.isIoCancelException
+import com.atlasv.android.mediax.downloader.exception.wrapAsDownloadFailedException
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
@@ -77,13 +79,16 @@ class ParallelCacheWriter(
                     mediaXLogger?.d { "ParallelCacheWriter all jobs are canceled($uriString)" }
                 }
                 val realReason = cause.cause
+                    ?.takeIf { !it.isIoCancelException() }
+                    ?.wrapAsDownloadFailedException(downloadUrl = uriString)
                 if (realReason != null) {
                     perfTracker?.trackDownloadFailed(realReason)
                 }
-                throw cause
+                throw (realReason ?: cause)
             } catch (cause: Throwable) {
-                perfTracker?.trackDownloadFailed(cause)
-                throw cause
+                val downloadException = cause.wrapAsDownloadFailedException(downloadUrl = uriString)
+                perfTracker?.trackDownloadFailed(downloadException)
+                throw downloadException
             }
         }
     }
