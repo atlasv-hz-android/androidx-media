@@ -18,5 +18,5 @@ fun Throwable.isIoCancelException(): Boolean {
 }
 
 fun Throwable.wrapAsDownloadFailedException(downloadUrl: String): Throwable {
-    return DownloadFailException(downloadUrl, cause)
+    return DownloadFailException(downloadUrl, this)
 }
