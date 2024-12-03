@@ -44,24 +44,28 @@ object DownloaderAgent : DownloadListener {
             mediaXCacheSupplier,
             contentLengthLoader,
             perfTracker = object : DownloadPerfTracker {
-                override fun trackDownloadSpeed(bytesPerSecond: Long, rangeCount: Int) {
-                    mediaXLogger?.d { "PerfTrack: speed=${bytesPerSecond / 1024}, rangeCount=$rangeCount" }
+                override fun trackDownloadSpeed(
+                    downloadUrl: String,
+                    bytesPerSecond: Long,
+                    rangeCount: Int
+                ) {
+                    mediaXLogger?.d { "PerfTrack: speed=${bytesPerSecond / 1024}, rangeCount=$rangeCount($downloadUrl)" }
                 }
 
-                override fun trackDownloadStart() {
-                    mediaXLogger?.d { "PerfTrack: trackDownloadStart" }
+                override fun trackDownloadStart(downloadUrl: String) {
+                    mediaXLogger?.d { "PerfTrack: trackDownloadStart($downloadUrl)" }
                 }
 
-                override fun trackDownloadSuccess(rangeCount: Int) {
-                    mediaXLogger?.d { "PerfTrack: trackDownloadSuccess: rangeCount=$rangeCount" }
+                override fun trackDownloadSuccess(downloadUrl: String, rangeCount: Int) {
+                    mediaXLogger?.d { "PerfTrack: trackDownloadSuccess: rangeCount=$rangeCount($downloadUrl)" }
                 }
 
-                override fun trackSaveSuccess(fileSize: Long) {
-                    mediaXLogger?.d { "PerfTrack: trackSaveSuccess, fileSize=$fileSize" }
+                override fun trackSaveSuccess(downloadUrl: String, fileSize: Long) {
+                    mediaXLogger?.d { "PerfTrack: trackSaveSuccess, fileSize=$fileSize($downloadUrl)" }
                 }
 
-                override fun trackDownloadFailed(cause: Throwable) {
-                    mediaXLogger?.e(cause) { "PerfTrack: trackDownloadFailed" }
+                override fun trackDownloadFailed(downloadUrl: String, cause: Throwable) {
+                    mediaXLogger?.e(cause) { "PerfTrack: trackDownloadFailed($downloadUrl)" }
                 }
             })
     }

@@ -57,7 +57,7 @@ class ParallelProgressListener(
 
             val isAllRangeComplete = mergeContentLength in 1..mergeBytesCached
             if (isAllRangeComplete) {
-                perfTracker?.trackDownloadSpeed(bytesPerSecond, rangeCount)
+                perfTracker?.trackDownloadSpeed(uriString, bytesPerSecond, rangeCount)
             }
 
             downloadListener?.onProgress(

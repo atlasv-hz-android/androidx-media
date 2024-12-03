@@ -8,9 +8,9 @@ import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.getContentLength
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
-import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.exception.isIoCancelException
 import com.atlasv.android.mediax.downloader.exception.wrapAsDownloadFailedException
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
@@ -67,11 +67,11 @@ class ParallelCacheWriter(
                 }
             }
             try {
-                perfTracker?.trackDownloadStart()
+                perfTracker?.trackDownloadStart(uriString)
                 jobs?.awaitAll()
-                perfTracker?.trackDownloadSuccess(rangeCount)
+                perfTracker?.trackDownloadSuccess(uriString, rangeCount)
                 val fileLength = saveToOutputStream(uriString, outputTarget)
-                perfTracker?.trackSaveSuccess(fileLength)
+                perfTracker?.trackSaveSuccess(uriString, fileLength)
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
@@ -82,12 +82,12 @@ class ParallelCacheWriter(
                     ?.takeIf { !it.isIoCancelException() }
                     ?.wrapAsDownloadFailedException(downloadUrl = uriString)
                 if (realReason != null) {
-                    perfTracker?.trackDownloadFailed(realReason)
+                    perfTracker?.trackDownloadFailed(uriString, realReason)
                 }
                 throw (realReason ?: cause)
             } catch (cause: Throwable) {
                 val downloadException = cause.wrapAsDownloadFailedException(downloadUrl = uriString)
-                perfTracker?.trackDownloadFailed(downloadException)
+                perfTracker?.trackDownloadFailed(uriString, downloadException)
                 throw downloadException
             }
         }
