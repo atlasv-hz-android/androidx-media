@@ -46,10 +46,10 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             kotlin.runCatching {
                 DownloaderAgent.contentLengthLoader.fetch(ContentRequestStringModel(uriString = downloadUrl))
-                testRangeCount(downloadUrl, 3, 1)
             }.getOrElse {
                 mediaXLogger?.e(it) { "testDownload failed" }
             }
+            testRangeCount(downloadUrl, 3, 1)
         }
     }
 

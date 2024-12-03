@@ -55,6 +55,9 @@ class MediaXDownloaderCore(
         return try {
             cacheWriter.cache()
             DownloadResult(downloadUrl, outputTarget, contentLength)
+        } catch (cause: Throwable) {
+            // cacheWriter.cache()内部已处理完各种异常，此处只需要返回null
+            null
         } finally {
             writerMap.remove(downloadUrl)
         }
