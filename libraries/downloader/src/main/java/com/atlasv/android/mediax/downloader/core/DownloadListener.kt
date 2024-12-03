@@ -21,4 +21,10 @@ interface DownloadListener {
         id: String,
         specProgressInfoMap: Map<Int, SpecProgressInfo>
     )
+
+    fun onDownloadSpeed(downloadUrl: String, bytesPerSecond: Long, rangeCount: Int)
+    fun onDownloadStart(downloadUrl: String)
+    fun onDownloadSuccess(downloadUrl: String, rangeCount: Int)
+    fun onSaveSuccess(downloadUrl: String, fileSize: Long)
+    fun onDownloadFailed(downloadUrl: String, cause: Throwable)
 }

@@ -2,7 +2,6 @@ package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
-import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.getContentLength
@@ -29,11 +28,10 @@ class ParallelCacheWriter(
     private val rangeCountStrategy: RangeCountStrategy,
     private val contentLength: Long,
     private val outputTarget: OutputTarget,
-    downloadListener: DownloadListener?,
-    private val perfTracker: DownloadPerfTracker?
+    private val downloadListener: DownloadListener?
 ) {
     private val parallelProgressListener =
-        ParallelProgressListener(uriString = uriString, id = id, downloadListener, perfTracker)
+        ParallelProgressListener(uriString = uriString, id = id, downloadListener)
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
 
@@ -67,11 +65,11 @@ class ParallelCacheWriter(
                 }
             }
             try {
-                perfTracker?.trackDownloadStart(uriString)
+                downloadListener?.onDownloadStart(uriString)
                 jobs?.awaitAll()
-                perfTracker?.trackDownloadSuccess(uriString, rangeCount)
+                downloadListener?.onDownloadSuccess(uriString, rangeCount)
                 val fileLength = saveToOutputStream(uriString, outputTarget)
-                perfTracker?.trackSaveSuccess(uriString, fileLength)
+                downloadListener?.onSaveSuccess(uriString, fileLength)
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
@@ -82,12 +80,12 @@ class ParallelCacheWriter(
                     ?.takeIf { !it.isIoCancelException() }
                     ?.wrapAsDownloadFailedException(downloadUrl = uriString)
                 if (realReason != null) {
-                    perfTracker?.trackDownloadFailed(uriString, realReason)
+                    downloadListener?.onDownloadFailed(uriString, realReason)
                 }
                 throw (realReason ?: cause)
             } catch (cause: Throwable) {
                 val downloadException = cause.wrapAsDownloadFailedException(downloadUrl = uriString)
-                perfTracker?.trackDownloadFailed(uriString, downloadException)
+                downloadListener?.onDownloadFailed(uriString, downloadException)
                 throw downloadException
             }
         }

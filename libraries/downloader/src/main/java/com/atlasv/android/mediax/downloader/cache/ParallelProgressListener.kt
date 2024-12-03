@@ -1,7 +1,6 @@
 package com.atlasv.android.mediax.downloader.cache
 
 import androidx.media3.datasource.cache.CacheWriter.ProgressListener
-import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.CallbackRateLimiter
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
@@ -13,8 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 class ParallelProgressListener(
     private val uriString: String,
     private val id: String,
-    private val downloadListener: DownloadListener?,
-    private val perfTracker: DownloadPerfTracker?
+    private val downloadListener: DownloadListener?
 ) {
     private val specProgressInfoMap = ConcurrentHashMap<Int, SpecProgressInfo>()
     private var currentProgress: Float = 0f
@@ -57,7 +55,7 @@ class ParallelProgressListener(
 
             val isAllRangeComplete = mergeContentLength in 1..mergeBytesCached
             if (isAllRangeComplete) {
-                perfTracker?.trackDownloadSpeed(uriString, bytesPerSecond, rangeCount)
+                downloadListener?.onDownloadSpeed(uriString, bytesPerSecond, rangeCount)
             }
 
             downloadListener?.onProgress(

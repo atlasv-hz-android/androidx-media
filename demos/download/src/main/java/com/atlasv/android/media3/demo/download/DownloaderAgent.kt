@@ -3,7 +3,6 @@ package com.atlasv.android.media3.demo.download
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
-import com.atlasv.android.mediax.downloader.analytics.DownloadPerfTracker
 import com.atlasv.android.mediax.downloader.core.ContentLengthLoader
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCacheSupplier
@@ -41,33 +40,8 @@ object DownloaderAgent : DownloadListener {
 
     val downloadCore by lazy {
         MediaXDownloaderCore(
-            mediaXCacheSupplier,
-            contentLengthLoader,
-            perfTracker = object : DownloadPerfTracker {
-                override fun trackDownloadSpeed(
-                    downloadUrl: String,
-                    bytesPerSecond: Long,
-                    rangeCount: Int
-                ) {
-                    mediaXLogger?.d { "PerfTrack: speed=${bytesPerSecond / 1024}, rangeCount=$rangeCount($downloadUrl)" }
-                }
-
-                override fun trackDownloadStart(downloadUrl: String) {
-                    mediaXLogger?.d { "PerfTrack: trackDownloadStart($downloadUrl)" }
-                }
-
-                override fun trackDownloadSuccess(downloadUrl: String, rangeCount: Int) {
-                    mediaXLogger?.d { "PerfTrack: trackDownloadSuccess: rangeCount=$rangeCount($downloadUrl)" }
-                }
-
-                override fun trackSaveSuccess(downloadUrl: String, fileSize: Long) {
-                    mediaXLogger?.d { "PerfTrack: trackSaveSuccess, fileSize=$fileSize($downloadUrl)" }
-                }
-
-                override fun trackDownloadFailed(downloadUrl: String, cause: Throwable) {
-                    mediaXLogger?.e(cause) { "PerfTrack: trackDownloadFailed($downloadUrl)" }
-                }
-            })
+            mediaXCacheSupplier, contentLengthLoader
+        )
     }
 
     private fun createCacheSupplier(): MediaXCacheSupplier {
@@ -107,5 +81,29 @@ object DownloaderAgent : DownloadListener {
                 specs = specProgressInfoMap.values.toList().sortedBy { it.specIndex }
             ))
         }
+    }
+
+    override fun onDownloadSpeed(
+        downloadUrl: String,
+        bytesPerSecond: Long,
+        rangeCount: Int
+    ) {
+        mediaXLogger?.d { "onDownloadSpeed: speed=${bytesPerSecond / 1024}, rangeCount=$rangeCount($downloadUrl)" }
+    }
+
+    override fun onDownloadStart(downloadUrl: String) {
+        mediaXLogger?.d { "onDownloadStart: ($downloadUrl)" }
+    }
+
+    override fun onDownloadSuccess(downloadUrl: String, rangeCount: Int) {
+        mediaXLogger?.d { "onDownloadSuccess: rangeCount=$rangeCount($downloadUrl)" }
+    }
+
+    override fun onSaveSuccess(downloadUrl: String, fileSize: Long) {
+        mediaXLogger?.d { "onSaveSuccess: fileSize=$fileSize($downloadUrl)" }
+    }
+
+    override fun onDownloadFailed(downloadUrl: String, cause: Throwable) {
+        mediaXLogger?.e(cause) { "onDownloadFailed($downloadUrl)" }
     }
 }
