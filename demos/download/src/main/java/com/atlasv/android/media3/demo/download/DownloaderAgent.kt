@@ -26,14 +26,9 @@ object DownloaderAgent : DownloadListener {
     private val okHttpClient by lazy {
         OkHttpClient.Builder().build()
     }
-    private val mediaXCacheSupplier by lazy {
-        createCacheSupplier()
-    }
 
     val downloadCore by lazy {
-        MediaXDownloaderCore(
-            appContext, okHttpClient, mediaXCacheSupplier
-        )
+        MediaXDownloaderCore(appContext, okHttpClient, createCacheSupplier())
     }
 
     private fun createCacheSupplier(): MediaXCacheSupplier {
