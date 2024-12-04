@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class ParallelProgressListener(
     private val uriString: String,
-    private val id: String,
+    private val taskId: String,
     private val downloadListener: DownloadListener?
 ) {
     private val specProgressInfoMap = ConcurrentHashMap<Int, SpecProgressInfo>()
@@ -26,7 +26,7 @@ class ParallelProgressListener(
     private fun onProgressAtIndex(
         index: Int,
         rangeCount: Int,
-        contentLength: Long,
+        estimateContentLength: Long,
         requestLength: Long,
         bytesCached: Long,
         newBytesCached: Long
@@ -47,7 +47,7 @@ class ParallelProgressListener(
             )
             val (_, mergeBytesCached, mergeContentLength) = calcMergeProgress(
                 index,
-                contentLength,
+                estimateContentLength,
                 specProgressInfoMap
             )
             currentProgress =
@@ -55,7 +55,7 @@ class ParallelProgressListener(
 
             val isAllRangeComplete = mergeContentLength in 1..mergeBytesCached
             if (isAllRangeComplete) {
-                downloadListener?.onDownloadSpeed(uriString, bytesPerSecond, rangeCount)
+                downloadListener?.onDownloadSpeed(taskId, uriString, bytesPerSecond, rangeCount)
             }
 
             downloadListener?.onProgress(
@@ -64,7 +64,7 @@ class ParallelProgressListener(
                 newBytesCached = newBytesCached,
                 speedPerSeconds = bytesPerSecond,
                 downloadUrl = uriString,
-                id = id,
+                taskId = taskId,
                 specProgressInfoMap = specProgressInfoMap
             )
         }
@@ -72,11 +72,11 @@ class ParallelProgressListener(
 
     private fun calcMergeProgress(
         index: Int,
-        contentLength: Long,
+        estimateContentLength: Long,
         infoMap: Map<Int, SpecProgressInfo>
     ): Triple<Int, Long, Long> {
         val values: Collection<SpecProgressInfo> = infoMap.values.toList()
-        val validContentLength = contentLength.takeIf { it > 0 } ?: values.sumOf {
+        val validContentLength = estimateContentLength.takeIf { it > 0 } ?: values.sumOf {
             it.requestLength
         }
         val mergeBytesCached = values.sumOf {
@@ -85,12 +85,12 @@ class ParallelProgressListener(
         return Triple(index, mergeBytesCached, validContentLength)
     }
 
-    fun asProgressListener(index: Int, rangeCount: Int, contentLength: Long): ProgressListener {
+    fun asProgressListener(index: Int, rangeCount: Int, estimateContentLength: Long): ProgressListener {
         return ProgressListener { requestLength, bytesCached, newBytesCached ->
             this@ParallelProgressListener.onProgressAtIndex(
                 index,
                 rangeCount,
-                contentLength,
+                estimateContentLength,
                 requestLength,
                 bytesCached,
                 newBytesCached

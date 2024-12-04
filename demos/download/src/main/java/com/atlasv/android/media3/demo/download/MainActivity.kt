@@ -94,6 +94,10 @@ class MainActivity : ComponentActivity() {
                             Greeting(text = "X", modifier = Modifier, onClick = {
                                 viewModel.testDownload(downloadUrl = X_VIDEO_1)
                             })
+
+                            Greeting(text = "同链接下载多次", modifier = Modifier, onClick = {
+                                viewModel.testDuplicateDownload(downloadUrl = TEST_URL_VIDEO2)
+                            })
                         }
                         items(downloadItems) {
                             ProgressItemView(it)

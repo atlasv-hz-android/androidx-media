@@ -30,36 +30,35 @@ class MediaXDownloaderCore(
 
     suspend fun download(
         downloadUrl: String,
-        id: String,
+        taskId: String,
         outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy? = null,
         downloadListener: DownloadListener?
     ): DownloadResult? {
-        if (writerMap[downloadUrl] != null) {
+        if (writerMap[taskId] != null) {
             throw IllegalStateException("Duplicate task of $downloadUrl")
         }
         val targetRangeCountStrategy = rangeCountStrategy ?: defaultRangeCountStrategy
-        val contentLength =
+        val estimateContentLength =
             if (targetRangeCountStrategy.isSingleRange()) C.LENGTH_UNSET.toLong() else contentLengthLoader.getContentLengthOrUnset(
                 uriString = downloadUrl
             )
         val cacheWriter =
             createCacheWriter(
                 downloadUrl,
-                id,
+                taskId,
                 outputTarget = outputTarget,
                 targetRangeCountStrategy,
                 downloadListener,
-                contentLength
+                estimateContentLength
             )
         return try {
             cacheWriter.cache()
-            DownloadResult(downloadUrl, outputTarget, contentLength)
         } catch (cause: Throwable) {
             // cacheWriter.cache()内部已处理完各种异常，此处只需要返回null
             null
         } finally {
-            writerMap.remove(downloadUrl)
+            writerMap.remove(taskId)
         }
     }
 
@@ -69,28 +68,28 @@ class MediaXDownloaderCore(
         outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy,
         downloadListener: DownloadListener?,
-        contentLength: Long
+        estimateContentLength: Long
     ): ParallelCacheWriter {
         val writer = ParallelCacheWriter(
             mediaXCache = mediaXCache,
             uriString = downloadUrl,
-            id = id,
+            taskId = id,
             rangeCountStrategy = rangeCountStrategy,
-            contentLength = contentLength,
+            estimateContentLength = estimateContentLength,
             outputTarget = outputTarget,
             downloadListener = downloadListener
         )
-        writerMap[downloadUrl] = writer
+        writerMap[id] = writer
         return writer
     }
 
-    fun cancel(uriString: String, alsoDelete: Boolean = false) {
-        val writer = writerMap[uriString]
+    fun cancel(id: String, alsoDelete: Boolean = false) {
+        val writer = writerMap[id]
         if (writer != null) {
             writer.cancel(alsoDelete = alsoDelete)
         } else if (alsoDelete) {
             // 暂停状态用户删除下载任务，需要走这个逻辑
-            mediaXCache.cache.removeResourceWithTrack(uriString)
+            mediaXCache.cache.removeResourceWithTrack(id)
         }
     }
 }

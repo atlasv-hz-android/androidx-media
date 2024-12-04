@@ -12,6 +12,7 @@ import com.atlasv.android.mediax.downloader.datasource.ConfigurableUpstreamStrat
 import com.atlasv.android.mediax.downloader.datasource.OkhttpUpstreamStrategy
 import com.atlasv.android.mediax.downloader.datasource.UpstreamStrategy
 import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -69,11 +70,12 @@ object DownloaderAgent : DownloadListener {
         newBytesCached: Long,
         speedPerSeconds: Long,
         downloadUrl: String,
-        id: String,
+        taskId: String,
         specProgressInfoMap: Map<Int, SpecProgressInfo>
     ) {
         progressMap.update { map ->
-            map + (downloadUrl to ProgressItem(
+            map + (taskId to ProgressItem(
+                taskId = taskId,
                 downloadUrl = downloadUrl,
                 requestLength = requestLength,
                 bytesCached = bytesCached,
@@ -84,6 +86,7 @@ object DownloaderAgent : DownloadListener {
     }
 
     override fun onDownloadSpeed(
+        taskId: String,
         downloadUrl: String,
         bytesPerSecond: Long,
         rangeCount: Int
@@ -91,19 +94,24 @@ object DownloaderAgent : DownloadListener {
         mediaXLogger?.d { "onDownloadSpeed: speed=${bytesPerSecond / 1024}, rangeCount=$rangeCount($downloadUrl)" }
     }
 
-    override fun onDownloadStart(downloadUrl: String) {
+    override fun onDownloadStart(taskId: String, downloadUrl: String) {
         mediaXLogger?.d { "onDownloadStart: ($downloadUrl)" }
     }
 
-    override fun onDownloadSuccess(downloadUrl: String, rangeCount: Int) {
+    override fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int) {
         mediaXLogger?.d { "onDownloadSuccess: rangeCount=$rangeCount($downloadUrl)" }
     }
 
-    override fun onSaveSuccess(downloadUrl: String, fileSize: Long) {
-        mediaXLogger?.d { "onSaveSuccess: fileSize=$fileSize($downloadUrl)" }
+    override fun onSaveSuccess(
+        taskId: String,
+        downloadUrl: String,
+        fileSize: Long,
+        outputTarget: OutputTarget
+    ) {
+        mediaXLogger?.d { "onSaveSuccess: fileSize=$fileSize($downloadUrl)($outputTarget)" }
     }
 
-    override fun onDownloadFailed(downloadUrl: String, cause: Throwable) {
+    override fun onDownloadFailed(taskId: String, downloadUrl: String, cause: Throwable) {
         mediaXLogger?.e(cause) { "onDownloadFailed($downloadUrl)" }
     }
 }

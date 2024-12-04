@@ -6,6 +6,7 @@ import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
  * Created by weiping on 2024/11/8
  */
 data class ProgressItem(
+    val taskId: String,
     val downloadUrl: String,
     val requestLength: Long,
     val bytesCached: Long,

@@ -1,6 +1,7 @@
 package com.atlasv.android.mediax.downloader.core
 
 import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
+import com.atlasv.android.mediax.downloader.output.OutputTarget
 
 /**
  *
@@ -18,13 +19,19 @@ interface DownloadListener {
         newBytesCached: Long,
         speedPerSeconds: Long,
         downloadUrl: String,
-        id: String,
+        taskId: String,
         specProgressInfoMap: Map<Int, SpecProgressInfo>
     )
 
-    fun onDownloadSpeed(downloadUrl: String, bytesPerSecond: Long, rangeCount: Int)
-    fun onDownloadStart(downloadUrl: String)
-    fun onDownloadSuccess(downloadUrl: String, rangeCount: Int)
-    fun onSaveSuccess(downloadUrl: String, fileSize: Long)
-    fun onDownloadFailed(downloadUrl: String, cause: Throwable)
+    fun onDownloadSpeed(taskId: String, downloadUrl: String, bytesPerSecond: Long, rangeCount: Int)
+    fun onDownloadStart(taskId: String, downloadUrl: String)
+    fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int)
+    fun onSaveSuccess(
+        taskId: String,
+        downloadUrl: String,
+        fileSize: Long,
+        outputTarget: OutputTarget
+    )
+
+    fun onDownloadFailed(taskId: String, downloadUrl: String, cause: Throwable)
 }

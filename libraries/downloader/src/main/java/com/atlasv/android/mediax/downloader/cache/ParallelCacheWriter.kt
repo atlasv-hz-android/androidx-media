@@ -9,6 +9,7 @@ import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
 import com.atlasv.android.mediax.downloader.exception.isIoCancelException
 import com.atlasv.android.mediax.downloader.exception.wrapAsDownloadFailedException
+import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.CancellationException
@@ -24,14 +25,14 @@ import java.io.InterruptedIOException
 class ParallelCacheWriter(
     private val mediaXCache: MediaXCache,
     private val uriString: String,
-    id: String,
+    private val taskId: String,
     private val rangeCountStrategy: RangeCountStrategy,
-    private val contentLength: Long,
+    private val estimateContentLength: Long,
     private val outputTarget: OutputTarget,
     private val downloadListener: DownloadListener?
 ) {
     private val parallelProgressListener =
-        ParallelProgressListener(uriString = uriString, id = id, downloadListener)
+        ParallelProgressListener(uriString = uriString, taskId = taskId, downloadListener)
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
 
@@ -42,8 +43,8 @@ class ParallelCacheWriter(
         return parallelProgressListener.getProgress()
     }
 
-    suspend fun cache() {
-        coroutineScope {
+    suspend fun cache(): DownloadResult {
+        return coroutineScope {
             val dataSpecs = createDataSpecs()
             val rangeCount = dataSpecs.size
             jobs = dataSpecs.mapIndexed { index, dataSpec ->
@@ -65,11 +66,12 @@ class ParallelCacheWriter(
                 }
             }
             try {
-                downloadListener?.onDownloadStart(uriString)
+                downloadListener?.onDownloadStart(taskId, uriString)
                 jobs?.awaitAll()
-                downloadListener?.onDownloadSuccess(uriString, rangeCount)
+                downloadListener?.onDownloadSuccess(taskId, uriString, rangeCount)
                 val fileLength = saveToOutputStream(uriString, outputTarget)
-                downloadListener?.onSaveSuccess(uriString, fileLength)
+                downloadListener?.onSaveSuccess(taskId, uriString, fileLength, outputTarget)
+                DownloadResult(taskId = taskId, uriString, outputTarget, fileLength)
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
@@ -80,12 +82,12 @@ class ParallelCacheWriter(
                     ?.takeIf { !it.isIoCancelException() }
                     ?.wrapAsDownloadFailedException(downloadUrl = uriString)
                 if (realReason != null) {
-                    downloadListener?.onDownloadFailed(uriString, realReason)
+                    downloadListener?.onDownloadFailed(taskId, uriString, realReason)
                 }
                 throw (realReason ?: cause)
             } catch (cause: Throwable) {
                 val downloadException = cause.wrapAsDownloadFailedException(downloadUrl = uriString)
-                downloadListener?.onDownloadFailed(uriString, downloadException)
+                downloadListener?.onDownloadFailed(taskId, uriString, downloadException)
                 throw downloadException
             }
         }
@@ -99,7 +101,7 @@ class ParallelCacheWriter(
         val dataSource = mediaXCache.createDataSource()
         return CacheWriter(
             dataSource, dataSpec, null,
-            parallelProgressListener.asProgressListener(index, rangeCount, contentLength)
+            parallelProgressListener.asProgressListener(index, rangeCount, estimateContentLength)
         )
     }
 
@@ -108,34 +110,40 @@ class ParallelCacheWriter(
         mediaXCache.cache.removeResourceWithTrack(uriString)
     }
 
+    private fun createDataSpecBuilder(key: String, uriString: String): DataSpec.Builder {
+        return DataSpec.Builder().setKey(key).setUri(uriString)
+    }
+
     private fun saveToOutputStream(
         uriString: String,
         outputTarget: OutputTarget
     ): Long {
         val dataSource = mediaXCache.createDataSource()
-        val dataSpec = DataSpec.Builder().setUri(uriString).build()
+        val dataSpec = createDataSpecBuilder(key = taskId, uriString = uriString).build()
         dataSource.saveDataSpec(dataSpec, outputTarget)
         val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
-        val contentLength = mediaXCache.cache.getContentLength(uriString)
+        val contentLength = mediaXCache.cache.getContentLength(cacheKey)
         mediaXCache.cache.removeResourceWithTrack(cacheKey)
         return contentLength
     }
 
     private fun createDataSpecs(): List<DataSpec> {
-        val isContentLengthKnown = contentLength > 0
+        val isContentLengthKnown = estimateContentLength > 0
         val rangeCount =
-            if (!isContentLengthKnown) 1 else rangeCountStrategy.getRangeCount(contentLength = contentLength)
+            if (!isContentLengthKnown) 1 else rangeCountStrategy.getRangeCount(contentLength = estimateContentLength)
                 .coerceAtLeast(1)
-        val rangeLength = if (isContentLengthKnown) contentLength / rangeCount else contentLength
-        mediaXLogger?.d { "Set range count to $rangeCount, contentLength=$contentLength, uriString=$uriString" }
+        val rangeLength = if (isContentLengthKnown) estimateContentLength / rangeCount else estimateContentLength
+        mediaXLogger?.d { "Set range count to $rangeCount, estimateContentLength=$estimateContentLength, uriString=$uriString" }
         return (0 until rangeCount).map { index ->
             val rangeStart = rangeLength * index
             val dataSpec =
-                DataSpec.Builder().setUri(uriString).setPosition(rangeStart).apply {
-                    if (index != rangeCount - 1) {
-                        setLength(rangeLength)
-                    }
-                }.build()
+                createDataSpecBuilder(key = taskId, uriString = uriString)
+                    .setPosition(rangeStart)
+                    .apply {
+                        if (index != rangeCount - 1) {
+                            setLength(rangeLength)
+                        }
+                    }.build()
             mediaXLogger?.d { "Build DataSpec: $dataSpec" }
             dataSpec
         }
