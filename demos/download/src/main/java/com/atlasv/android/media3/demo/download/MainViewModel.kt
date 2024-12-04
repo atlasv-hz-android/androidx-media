@@ -46,7 +46,11 @@ class MainViewModel : ViewModel() {
     fun testDownload(downloadUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             kotlin.runCatching {
-                DownloaderAgent.contentLengthLoader.fetch(ContentRequestStringModel(uriString = downloadUrl))
+                DownloaderAgent.downloadCore.contentLengthLoader.fetch(
+                    ContentRequestStringModel(
+                        uriString = downloadUrl
+                    )
+                )
             }.getOrElse {
                 mediaXLogger?.e(it) { "testDownload failed" }
             }

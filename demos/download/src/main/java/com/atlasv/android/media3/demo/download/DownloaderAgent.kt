@@ -1,9 +1,7 @@
 package com.atlasv.android.media3.demo.download
 
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
-import com.atlasv.android.mediax.downloader.core.ContentLengthLoader
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCacheSupplier
 import com.atlasv.android.mediax.downloader.core.MediaXDownloaderCore
@@ -28,20 +26,13 @@ object DownloaderAgent : DownloadListener {
     private val okHttpClient by lazy {
         OkHttpClient.Builder().build()
     }
-    val contentLengthLoader by lazy {
-        ContentLengthLoader(okHttpClient)
-    }
-    private val databaseProvider by lazy {
-        // Note: This should be a singleton in your app.
-        StandaloneDatabaseProvider(App.app)
-    }
     private val mediaXCacheSupplier by lazy {
         createCacheSupplier()
     }
 
     val downloadCore by lazy {
         MediaXDownloaderCore(
-            mediaXCacheSupplier, contentLengthLoader
+            appContext, okHttpClient, mediaXCacheSupplier
         )
     }
 
@@ -50,8 +41,7 @@ object DownloaderAgent : DownloadListener {
             upstreamStrategy = getUpstreamDataSourceStrategy(),
             cacheDirSupplier = {
                 File(appContext.getExternalFilesDir(null), "mediax-download-cache")
-            },
-            databaseProvider = databaseProvider
+            }
         )
     }
 

@@ -1,6 +1,5 @@
 package com.atlasv.android.mediax.downloader.core
 
-import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.CacheEvictor
 import androidx.media3.datasource.cache.CacheKeyFactory
 import androidx.media3.datasource.cache.NoOpCacheEvictor
@@ -14,7 +13,6 @@ import java.io.File
 class SimpleMediaXCacheSupplier(
     private val upstreamStrategy: UpstreamStrategy,
     private val cacheDirSupplier: () -> File,
-    private val databaseProvider: StandaloneDatabaseProvider,
     private val evictor: CacheEvictor = NoOpCacheEvictor(),
     private val cacheKeyFactory: CacheKeyFactory = CacheKeyFactory.DEFAULT
 ) : MediaXCacheSupplier {
@@ -25,7 +23,7 @@ class SimpleMediaXCacheSupplier(
         val cache = SimpleCache(
             dir,
             evictor,
-            databaseProvider,
+            MediaXDownloaderCore.databaseProvider,
         )
         MediaXCache(
             cache = cache,

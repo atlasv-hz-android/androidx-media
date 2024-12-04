@@ -1,6 +1,9 @@
 package com.atlasv.android.mediax.downloader.core
 
+import android.content.Context
 import androidx.media3.common.C
+import androidx.media3.database.DatabaseProvider
+import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
@@ -9,16 +12,26 @@ import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
+import okhttp3.OkHttpClient
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by weiping on 2024/9/7
  */
 class MediaXDownloaderCore(
+    appContext: Context,
+    okHttpClient: OkHttpClient,
     mediaXCacheSupplier: MediaXCacheSupplier,
-    private val contentLengthLoader: ContentLengthLoader,
     private val defaultRangeCountStrategy: RangeCountStrategy = SimpleRangeStrategy.SingleRangeStrategy
 ) {
+    val contentLengthLoader by lazy {
+        ContentLengthLoader(okHttpClient)
+    }
+
+    init {
+        globalAppContext = appContext
+    }
+
     private val writerMap = ConcurrentHashMap<String, ParallelCacheWriter>()
     private val mediaXCache: MediaXCache by lazy {
         mediaXCacheSupplier.get()
@@ -90,6 +103,14 @@ class MediaXDownloaderCore(
         } else if (alsoDelete) {
             // 暂停状态用户删除下载任务，需要走这个逻辑
             mediaXCache.cache.removeResourceWithTrack(id)
+        }
+    }
+
+    companion object {
+        private lateinit var globalAppContext: Context
+        val databaseProvider: DatabaseProvider by lazy {
+            // Note: This should be a singleton in your app.
+            StandaloneDatabaseProvider(globalAppContext)
         }
     }
 }
