@@ -17,27 +17,25 @@ class App : Application() {
         ResourceContentLoader.loggerProvider = {
             Timber.tag("res-load")
         }
-        MediaXLoggerMgr.loggerSupplier = {
-            object : MediaXLogger {
-                override fun d(messageSupplier: () -> String) {
-                    Timber.tag("res-load-mediax").d(messageSupplier)
-                }
+        MediaXLoggerMgr.mediaXLogger = object : MediaXLogger {
+            override fun d(messageSupplier: () -> String) {
+                Timber.tag("res-load-mediax").d(messageSupplier)
+            }
 
-                override fun w(messageSupplier: () -> String) {
-                    Timber.tag("res-load-mediax").w(messageSupplier)
-                }
+            override fun w(messageSupplier: () -> String) {
+                Timber.tag("res-load-mediax").w(messageSupplier)
+            }
 
-                override fun w(cause: Throwable?, messageSupplier: () -> String) {
-                    Timber.tag("res-load-mediax").w(cause, messageSupplier)
-                }
+            override fun w(cause: Throwable?, messageSupplier: () -> String) {
+                Timber.tag("res-load-mediax").w(cause, messageSupplier)
+            }
 
-                override fun e(messageSupplier: () -> String) {
-                    Timber.tag("res-load-mediax").e(messageSupplier)
-                }
+            override fun e(messageSupplier: () -> String) {
+                Timber.tag("res-load-mediax").e(messageSupplier)
+            }
 
-                override fun e(cause: Throwable?, messageSupplier: () -> String) {
-                    Timber.tag("res-load-mediax").e(cause, messageSupplier)
-                }
+            override fun e(cause: Throwable?, messageSupplier: () -> String) {
+                Timber.tag("res-load-mediax").e(cause, messageSupplier)
             }
         }
     }
