@@ -81,6 +81,7 @@ import java.io.IOException;
       glProgram.setSamplerTexIdUniform(
           "uColorLut", colorLut.getLutTextureId(presentationTimeUs), /* texUnitIndex= */ 1);
       glProgram.setFloatUniform("uColorLutLength", colorLut.getLength(presentationTimeUs));
+      glProgram.setIntUniform("uColorLutFormat", colorLut.getLutFormat());
       glProgram.bindAttributesAndUniforms();
 
       GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, /* first= */ 0, /* count= */ 4);

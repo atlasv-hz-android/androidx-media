@@ -1,77 +1,14 @@
 #version 100
-// Copyright 2022 The Android Open Source Project
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// ES2 fragment shader that samples from a (non-external) texture with
-// uTexSampler, copying from this texture to the current output while
-// applying a 3D color lookup table to change the pixel colors.
-
 precision highp float;
 uniform sampler2D uTexSampler;
-// The uColorLut texture is a N x N^2 2D texture where each z-plane of the 3D
-// LUT is vertically stacked on top of each other. The red channel of the input
-// color (z-axis in LUT[R][G][B] = LUT[z][y][x]) points to the plane to sample
-// from. For more information check the
-// androidx/media3/effect/SingleColorLut.java class, especially the function
-// #transformCubeIntoBitmap with a provided example.
 uniform sampler2D uColorLut;
 uniform float uColorLutLength;
+uniform int uColorLutFormat;
 varying vec2 vTexSamplingCoord;
 
-// Applies the color lookup using uLut based on the input colors.
 vec3 applyLookup(vec3 color) {
-  // Reminder: Inside OpenGL vector.xyz is the same as vector.rgb.
-  // Here we use mentions of x and y coordinates to references to
-  // the position to sample from inside the 2D LUT plane and
-  // rgb to create the 3D coordinates based on the input colors.
-
-  // To sample from the 3D LUT we interpolate bilinearly twice in the 2D LUT
-  // to replicate the trilinear interpolation in a 3D LUT. Thus we sample
-  // from the plane of position redCoordLow and on the plane above.
-  // redCoordLow points to the lower plane to sample from.
   float redCoord = color.r * (uColorLutLength - 1.0);
-  // Clamping to uColorLutLength - 2 is only needed if redCoord points to the
-  // most upper plane. In this case there would not be any plane above
-  // available to sample from.
   float redCoordLow = clamp(floor(redCoord), 0.0, uColorLutLength - 2.0);
-
-  // lowerY is indexed in two steps. First redCoordLow defines the plane to
-  // sample from. Next the green color component is added to index the row in
-  // the found plane. As described in the NVIDIA blog article about LUTs
-  // https://developer.nvidia.com/gpugems/gpugems2/part-iii-high-quality-rendering/chapter-24-using-lookup-tables-accelerate-color
-  // (Section 24.2), we sample from color * scale + offset, where offset is
-  // defined by 1 / (2 * uColorLutLength) and the scale is defined by
-  // (uColorLutLength - 1.0) / uColorLutLength.
-
-  // The following derives the equation of lowerY. For this let
-  // N = uColorLutLenght. The general formula to sample at row y
-  // is defined as y = N * r + g.
-  // Using the offset and scale as described in NVIDIA's blog article we get:
-  // y = offset + (N * r + g) * scale
-  // y = 1 / (2 * N) + (N * r + g) * (N - 1) / N
-  // y = 1 / (2 * N) + N * r * (N - 1) / N + g * (N - 1) / N
-  // We have defined redCoord as r * (N - 1) if we excluded the clamping for
-  // now, giving us:
-  // y = 1 / (2 * N) + N * redCoord / N + g * (N - 1) / N
-  // This simplifies to:
-  // y = 0.5 / N + (N * redCoord + g * (N - 1)) / N
-  // y = (0.5 + N * redCoord + g * (N - 1)) / N
-  // This formula now assumes a coordinate system in the range of [0, N] but
-  // OpenGL uses a [0, 1] unit coordinate system internally. Thus dividing
-  // by N gives us the final formula for y:
-  // y = ((0.5 + N * redCoord + g * (N - 1)) / N) / N
-  // y = (0.5 + redCoord * N + g * (N - 1)) / (N * N)
   float lowerY = (0.5 + redCoordLow * uColorLutLength +
                   color.g * (uColorLutLength - 1.0)) /
                  (uColorLutLength * uColorLutLength);
@@ -89,9 +26,41 @@ vec3 applyLookup(vec3 color) {
   return mix(lowerRgb, upperRgb, redCoord - redCoordLow);
 }
 
+vec3 applyLookup2(vec3 textureColor) {
+  float matchLut = 8.0;
+  if (uColorLutLength == 256.0) {
+    matchLut = 4.0;
+  } else {
+    matchLut = 8.0;
+  }
+
+  mediump float blueColor = textureColor.b * (pow(matchLut, 2.0)-1.0);
+  mediump vec2 quad1;
+  quad1.y = floor(floor(blueColor) / matchLut);
+  quad1.x = floor(blueColor) - (quad1.y * matchLut);
+  mediump vec2 quad2;
+  quad2.y = floor(ceil(blueColor) / matchLut);
+  quad2.x = ceil(blueColor) - (quad2.y * matchLut);
+  highp vec2 texPos1;
+  float dimen = pow(matchLut, 3.0);
+  texPos1.x = (quad1.x *(1.0/matchLut)) + 0.5/(dimen)+ ((1.0/matchLut - 1.0/dimen) * textureColor.r);
+  texPos1.y = (quad1.y *(1.0/matchLut)) + 0.5/(dimen) + ((1.0/matchLut - 1.0/dimen) * textureColor.g);
+  highp vec2 texPos2;
+  texPos2.x = (quad2.x *(1.0/matchLut)) + 0.5/(dimen) + ((1.0/matchLut - 1.0/dimen) * textureColor.r);
+  texPos2.y = (quad2.y *(1.0/matchLut)) + 0.5/(dimen) + ((1.0/matchLut - 1.0/dimen) * textureColor.g);
+  lowp vec3 newColor1 = texture2D(uColorLut, texPos1).rgb;
+  lowp vec3 newColor2 = texture2D(uColorLut, texPos2).rgb;
+  lowp vec3 newColor = mix(newColor1, newColor2, fract(blueColor));
+  return newColor;
+}
+
 void main() {
   vec4 inputColor = texture2D(uTexSampler, vTexSamplingCoord);
 
-  gl_FragColor.rgb = applyLookup(inputColor.rgb);
+  if (uColorLutFormat == 2) {
+    gl_FragColor.rgb = applyLookup2(inputColor.rgb);
+  } else {
+    gl_FragColor.rgb = applyLookup(inputColor.rgb);
+  }
   gl_FragColor.a = inputColor.a;
 }

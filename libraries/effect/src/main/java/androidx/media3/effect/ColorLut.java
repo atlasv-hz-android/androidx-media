@@ -17,6 +17,7 @@
 package androidx.media3.effect;
 
 import android.content.Context;
+import androidx.annotation.IntDef;
 import androidx.media3.common.VideoFrameProcessingException;
 import androidx.media3.common.util.GlUtil;
 import androidx.media3.common.util.UnstableApi;
@@ -27,6 +28,22 @@ import androidx.media3.common.util.UnstableApi;
  */
 @UnstableApi
 public interface ColorLut extends GlEffect {
+  /**
+   * The format of the LUT. HALD Bitmap of a flattened HALD image of width {@code N} and height {@code N^2}.
+   * height = width^2
+   */
+  int LUT_FORMAT_HALD = 0;
+  /**
+   * The format of the LUT. 3D cube of size {@code N x N x N}.
+   */
+  int LUT_FORMAT_CUBE = 1;
+  /**
+   * The format of the LUT. Square Bitmap of size {@code N x N}.
+   */
+  int LUT_FORMAT_SQUARE = 2;
+
+  @IntDef({LUT_FORMAT_HALD, LUT_FORMAT_CUBE, LUT_FORMAT_SQUARE})
+  @interface LutFormat {};
 
   /**
    * Returns the OpenGL texture ID of the LUT to apply to the pixels of the frame with the given
@@ -39,6 +56,9 @@ public interface ColorLut extends GlEffect {
 
   /** Releases the OpenGL texture of the LUT. */
   void release() throws GlUtil.GlException;
+
+  @LutFormat
+  int getLutFormat();
 
   @Override
   default GlShaderProgram toGlShaderProgram(Context context, boolean useHdr)

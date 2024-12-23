@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -108,6 +109,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -590,6 +592,25 @@ public final class TransformerActivity extends AppCompatActivity {
     if (resolutionHeight != C.LENGTH_UNSET) {
       effects.add(LanczosResample.scaleToFit(10000, resolutionHeight));
       effects.add(Presentation.createForHeight(resolutionHeight));
+    }
+
+    // 测试加滤镜效果
+    InputStream inputStream = null;
+    try {
+//      inputStream = getAssets().open("ArriLog.png");
+      inputStream = getAssets().open("UrbanGold.jpg");
+      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+      effects.add(SingleColorLut.createFromSquareBitmap(bitmap));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException e) {
+          // do nothing
+        }
+      }
     }
 
     return effects.build();
