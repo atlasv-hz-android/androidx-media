@@ -117,45 +117,6 @@ import java.util.concurrent.TimeoutException;
     }
   }
 
-  /** Blocks the caller until the given {@link Task} has completed. */
-  public void invoke(Task task) throws InterruptedException {
-    // If running on the executor service thread, run synchronously.
-    // Calling future.get() on the single executor thread would deadlock.
-    Thread videoFrameProcessingThread;
-    try {
-      videoFrameProcessingThread = threadFuture.get(EXECUTOR_SERVICE_TIMEOUT_MS, MILLISECONDS);
-    } catch (InterruptedException e) {
-      throw e;
-    } catch (Exception e) {
-      handleException(e);
-      return;
-    }
-    if (Thread.currentThread() == videoFrameProcessingThread) {
-      try {
-        task.run();
-      } catch (Exception e) {
-        handleException(e);
-      }
-      return;
-    }
-
-    // Not running on the executor service thread. Block until task.run() returns.
-    try {
-      Future<?> taskFuture =
-          singleThreadExecutorService.submit(
-              () -> {
-                try {
-                  task.run();
-                } catch (Exception e) {
-                  handleException(e);
-                }
-              });
-      taskFuture.get(EXECUTOR_SERVICE_TIMEOUT_MS, MILLISECONDS);
-    } catch (RuntimeException | ExecutionException | TimeoutException e) {
-      handleException(e);
-    }
-  }
-
   /**
    * Submits the given {@link Task} to be executed after all pending tasks have completed.
    *
