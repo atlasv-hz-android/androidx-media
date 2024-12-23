@@ -32,6 +32,8 @@ import androidx.media3.common.util.UnstableApi;
 public final class SingleColorLut implements ColorLut {
   private final Bitmap lut;
   private int lutTextureId;
+  @LutFormat
+  private int lutFormat = LUT_FORMAT_HALD;
 
   /**
    * Creates a new instance.
@@ -49,7 +51,7 @@ public final class SingleColorLut implements ColorLut {
             "All three dimensions of a LUT must match, received %d x %d x %d.",
             lutCube.length, lutCube[0].length, lutCube[0][0].length));
 
-    return new SingleColorLut(transformCubeIntoBitmap(lutCube));
+    return new SingleColorLut(transformCubeIntoBitmap(lutCube), LUT_FORMAT_CUBE);
   }
 
   /**
@@ -68,11 +70,26 @@ public final class SingleColorLut implements ColorLut {
     checkArgument(
         lut.getConfig() == Bitmap.Config.ARGB_8888, "Color representation needs to be ARGB_8888.");
 
-    return new SingleColorLut(lut);
+    return new SingleColorLut(lut, LUT_FORMAT_HALD);
   }
 
-  private SingleColorLut(Bitmap lut) {
+  /**
+   * Creates a new instance.
+   * @param lut, the bitmap of the LUT. The bitmap must be square. 512x512 only
+   * @return the SingleColorLut instance
+   */
+  public static SingleColorLut createFromSquareBitmap(Bitmap lut) {
+    checkArgument(
+        lut.getWidth() == lut.getHeight(),
+        formatInvariant(
+            "LUT needs to be square, received %d x %d.",
+            lut.getWidth(), lut.getHeight()));
+    return new SingleColorLut(lut, LUT_FORMAT_SQUARE);
+  }
+
+  private SingleColorLut(Bitmap lut, @LutFormat int lutFormat) {
     this.lut = lut;
+    this.lutFormat = lutFormat;
     lutTextureId = Format.NO_VALUE;
   }
 
@@ -135,6 +152,11 @@ public final class SingleColorLut implements ColorLut {
         "The LUT has not been stored as a texture in OpenGL yet. You must to call"
             + " #toGlShaderProgram() first.");
     return lutTextureId;
+  }
+
+  @Override
+  public int getLutFormat() {
+    return lutFormat;
   }
 
   @Override
