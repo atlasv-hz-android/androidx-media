@@ -597,8 +597,11 @@ public final class TransformerActivity extends AppCompatActivity {
     // 测试加滤镜效果
     InputStream inputStream = null;
     try {
+      //512x512
 //      inputStream = getAssets().open("ArriLog.png");
-      inputStream = getAssets().open("UrbanGold.jpg");
+//      inputStream = getAssets().open("UrbanGold.jpg");
+      //64x64
+      inputStream = getAssets().open("beautyandthebeast.png");
       Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
       effects.add(SingleColorLut.createFromSquareBitmap(bitmap));
     } catch (IOException e) {

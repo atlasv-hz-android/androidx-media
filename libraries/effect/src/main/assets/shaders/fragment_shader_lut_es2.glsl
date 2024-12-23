@@ -28,7 +28,7 @@ vec3 applyLookup(vec3 color) {
 
 vec3 applyLookup2(vec3 textureColor) {
   float matchLut = 8.0;
-  if (uColorLutLength == 256.0) {
+  if (uColorLutLength == 64.0) {
     matchLut = 4.0;
   } else {
     matchLut = 8.0;
