@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -108,6 +109,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -590,6 +592,40 @@ public final class TransformerActivity extends AppCompatActivity {
     if (resolutionHeight != C.LENGTH_UNSET) {
       effects.add(LanczosResample.scaleToFit(10000, resolutionHeight));
       effects.add(Presentation.createForHeight(resolutionHeight));
+    }
+
+
+    // 测试加效果
+    int length = 32; // 32 * 1024 尺寸的图
+    InputStream inputStream = null;
+    boolean useLut = true;
+    try {
+      inputStream = getAssets().open("grayscale.png");
+      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+      if (useLut) {
+        int[][][] lut = new int[length][length][length];
+        for (int r = 0; r < length; r++) { // 索引
+          for (int g = 0; g < length; g++) { // 位置
+            for (int b = 0; b < length; b++) { // 位置
+              // 格子位置：单列，第r排：r * length
+              lut[r][g][b] = bitmap.getPixel(b, r * length + g);
+            }
+          }
+        }
+        effects.add(SingleColorLut.createFromCube(lut));
+      } else {
+        effects.add(SingleColorLut.createFromBitmap(bitmap));
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException e) {
+          // do nothing
+        }
+      }
     }
 
     return effects.build();
