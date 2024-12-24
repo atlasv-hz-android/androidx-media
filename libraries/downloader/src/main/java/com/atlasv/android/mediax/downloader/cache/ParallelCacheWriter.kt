@@ -96,16 +96,18 @@ class ParallelCacheWriter(
 
     private fun cacheWithRetry(cacheWriter: CacheWriter) {
         // 最多执行retryTimes+1次，重试3次则最多执行4次
-        for (tryTime in 0..retryTimes) {
+        for (runTimes in 0..retryTimes) {
             try {
-                mediaXLogger?.d { "cacheWithRetry($tryTime/$retryTimes) start..." }
+                mediaXLogger?.d { "cacheWithRetry($runTimes/$retryTimes) start..." }
                 cacheWriter.cache()
-                mediaXLogger?.d { "cacheWithRetry($tryTime/$retryTimes) success" }
+                mediaXLogger?.d { "cacheWithRetry($runTimes/$retryTimes) success" }
                 break
             } catch (cause: Throwable) {
                 // 主动中断的情况不需要重试
-                if (cause !is InterruptedIOException) {
-                    mediaXLogger?.e(cause) { "cacheWithRetry($tryTime/$retryTimes) failed" }
+                if (cause !is InterruptedIOException && runTimes < retryTimes) {
+                    mediaXLogger?.e(cause) { "cacheWithRetry($runTimes/$retryTimes) failed, will retry" }
+                } else {
+                    throw cause
                 }
             }
         }
