@@ -122,7 +122,7 @@ class MainViewModel : ViewModel() {
             taskId = id,
             outputTarget = createOutputTarget(downloadUrl, id),
             rangeCountStrategy = rangeStrategy,
-            downloadListener = DownloaderAgent
+            downloadListener = null
         )?.also { result ->
             downloadResultMap.update {
                 it + (result.taskId to result)

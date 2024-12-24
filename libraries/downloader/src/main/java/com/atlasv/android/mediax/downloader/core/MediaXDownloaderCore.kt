@@ -10,6 +10,7 @@ import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
+import com.atlasv.android.mediax.downloader.listener.withParent
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
 import okhttp3.OkHttpClient
@@ -22,7 +23,8 @@ class MediaXDownloaderCore(
     appContext: Context,
     okHttpClient: OkHttpClient,
     mediaXCacheSupplier: MediaXCacheSupplier,
-    private val defaultRangeCountStrategy: RangeCountStrategy = SimpleRangeStrategy.SingleRangeStrategy
+    private val defaultRangeCountStrategy: RangeCountStrategy = SimpleRangeStrategy.SingleRangeStrategy,
+    private val rootDownloadListener: DownloadListener? = null
 ) {
     val contentLengthLoader by lazy {
         ContentLengthLoader(okHttpClient)
@@ -62,7 +64,7 @@ class MediaXDownloaderCore(
                 taskId,
                 outputTarget = outputTarget,
                 targetRangeCountStrategy,
-                downloadListener,
+                downloadListener.withParent(rootDownloadListener),
                 estimateContentLength
             )
         return try {
