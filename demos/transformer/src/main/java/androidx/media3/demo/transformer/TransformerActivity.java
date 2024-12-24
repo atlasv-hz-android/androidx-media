@@ -64,6 +64,8 @@ import androidx.media3.common.util.Log;
 import androidx.media3.common.util.Util;
 import androidx.media3.datasource.DataSourceBitmapLoader;
 import androidx.media3.effect.BitmapOverlay;
+import androidx.media3.effect.Brightness;
+import androidx.media3.effect.ColorTemperature;
 import androidx.media3.effect.Contrast;
 import androidx.media3.effect.DebugTraceUtil;
 import androidx.media3.effect.DrawableOverlay;
@@ -77,7 +79,9 @@ import androidx.media3.effect.Presentation;
 import androidx.media3.effect.RgbAdjustment;
 import androidx.media3.effect.RgbFilter;
 import androidx.media3.effect.RgbMatrix;
+import androidx.media3.effect.Saturation;
 import androidx.media3.effect.ScaleAndRotateTransformation;
+import androidx.media3.effect.Sharpen;
 import androidx.media3.effect.SingleColorLut;
 import androidx.media3.effect.TextOverlay;
 import androidx.media3.effect.TextureOverlay;
@@ -112,14 +116,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/** An {@link Activity} that exports and plays media using {@link Transformer}. */
+/**
+ * An {@link Activity} that exports and plays media using {@link Transformer}.
+ */
 public final class TransformerActivity extends AppCompatActivity {
+
   private static final String TAG = "TransformerActivity";
   private static final int IMAGE_DURATION_MS = 5_000;
   private static final int IMAGE_FRAME_RATE_FPS = 30;
@@ -142,12 +150,18 @@ public final class TransformerActivity extends AppCompatActivity {
   private Stopwatch exportStopwatch;
   private AspectRatioFrameLayout debugFrame;
 
-  @Nullable private DebugTextViewHelper debugTextViewHelper;
-  @Nullable private ExoPlayer inputPlayer;
-  @Nullable private ExoPlayer outputPlayer;
-  @Nullable private Transformer transformer;
-  @Nullable private File outputFile;
-  @Nullable private File oldOutputFile;
+  @Nullable
+  private DebugTextViewHelper debugTextViewHelper;
+  @Nullable
+  private ExoPlayer inputPlayer;
+  @Nullable
+  private ExoPlayer outputPlayer;
+  @Nullable
+  private Transformer transformer;
+  @Nullable
+  private File outputFile;
+  @Nullable
+  private File oldOutputFile;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -346,7 +360,9 @@ public final class TransformerActivity extends AppCompatActivity {
     return transformerBuilder.build();
   }
 
-  /** Creates a cache file, resetting it if it already exists. */
+  /**
+   * Creates a cache file, resetting it if it already exists.
+   */
   private File createExternalCacheFile(String fileName) throws IOException {
     File file = new File(getExternalCacheDir(), fileName);
     if (file.exists() && !file.delete()) {
@@ -503,8 +519,8 @@ public final class TransformerActivity extends AppCompatActivity {
           // uses a linear RGB color space internally. Meaning this is only for demonstration
           // purposes and it does not display a correct sepia frame.
           float[] sepiaMatrix = {
-            0.393f, 0.349f, 0.272f, 0, 0.769f, 0.686f, 0.534f, 0, 0.189f, 0.168f, 0.131f, 0, 0, 0,
-            0, 1
+              0.393f, 0.349f, 0.272f, 0, 0.769f, 0.686f, 0.534f, 0, 0.189f, 0.168f, 0.131f, 0, 0, 0,
+              0, 1
           };
           effects.add((RgbMatrix) (presentationTimeUs, useHdr) -> sepiaMatrix);
           break;
@@ -558,9 +574,9 @@ public final class TransformerActivity extends AppCompatActivity {
                       bundle.getFloat(ConfigurationActivity.PERIODIC_VIGNETTE_CENTER_X),
                       bundle.getFloat(ConfigurationActivity.PERIODIC_VIGNETTE_CENTER_Y),
                       /* minInnerRadius= */ bundle.getFloat(
-                          ConfigurationActivity.PERIODIC_VIGNETTE_INNER_RADIUS),
+                      ConfigurationActivity.PERIODIC_VIGNETTE_INNER_RADIUS),
                       /* maxInnerRadius= */ bundle.getFloat(
-                          ConfigurationActivity.PERIODIC_VIGNETTE_OUTER_RADIUS),
+                      ConfigurationActivity.PERIODIC_VIGNETTE_OUTER_RADIUS),
                       bundle.getFloat(ConfigurationActivity.PERIODIC_VIGNETTE_OUTER_RADIUS)));
     }
     if (selectedEffects[ConfigurationActivity.SPIN_3D_INDEX]) {
@@ -595,26 +611,8 @@ public final class TransformerActivity extends AppCompatActivity {
     }
 
     // 测试加滤镜效果
-    InputStream inputStream = null;
-    try {
-      //512x512
-//      inputStream = getAssets().open("ArriLog.png");
-//      inputStream = getAssets().open("UrbanGold.jpg");
-      //64x64
-      inputStream = getAssets().open("beautyandthebeast.png");
-      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-      effects.add(SingleColorLut.createFromSquareBitmap(bitmap));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException e) {
-          // do nothing
-        }
-      }
-    }
+//    effects.add(createTestFilter());
+    effects.addAll(createAIEnhanceEffects());
 
     return effects.build();
   }
@@ -828,7 +826,7 @@ public final class TransformerActivity extends AppCompatActivity {
     String permission = SDK_INT >= 33 ? READ_MEDIA_VIDEO : READ_EXTERNAL_STORAGE;
     if (ActivityCompat.checkSelfPermission(activity, permission)
         != PackageManager.PERMISSION_GRANTED) {
-      ActivityCompat.requestPermissions(activity, new String[] {permission}, /* requestCode= */ 0);
+      ActivityCompat.requestPermissions(activity, new String[]{permission}, /* requestCode= */ 0);
     }
   }
 
@@ -863,7 +861,8 @@ public final class TransformerActivity extends AppCompatActivity {
 
   private final class DemoDebugViewProvider implements DebugViewProvider {
 
-    @Nullable private SurfaceView surfaceView;
+    @Nullable
+    private SurfaceView surfaceView;
     private int width;
     private int height;
 
@@ -923,5 +922,39 @@ public final class TransformerActivity extends AppCompatActivity {
       }
       return surfaceView;
     }
+  }
+
+  private Effect createTestFilter() {
+    InputStream inputStream = null;
+    try {
+      //512x512
+//      inputStream = getAssets().open("ArriLog.png");
+//      inputStream = getAssets().open("UrbanGold.jpg");
+      //64x64
+      inputStream = getAssets().open("beautyandthebeast.png");
+      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+      return SingleColorLut.createFromSquareBitmap(bitmap);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException e) {
+          // do nothing
+        }
+      }
+    }
+  }
+
+  private List<Effect> createAIEnhanceEffects() {
+    //数值设置从 shotcut 移植过来
+    return Arrays.asList(
+        new Brightness(0.0105f),
+        new Contrast(0.04f),
+        new Saturation(1.0192f),
+        new Sharpen(0.5f),
+        new ColorTemperature(-0.04f)
+    );
   }
 }
