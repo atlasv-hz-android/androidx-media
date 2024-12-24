@@ -46,8 +46,8 @@ public abstract class BaseGlShaderProgram implements GlShaderProgram {
   private OutputListener outputListener;
   private ErrorListener errorListener;
   private Executor errorListenerExecutor;
-  private int inputWidth;
-  private int inputHeight;
+  protected int inputWidth;
+  protected int inputHeight;
 
   /**
    * Creates a {@code BaseGlShaderProgram} instance.
