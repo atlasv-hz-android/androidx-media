@@ -29,7 +29,8 @@ class ParallelCacheWriter(
     private val rangeCountStrategy: RangeCountStrategy,
     private val estimateContentLength: Long,
     private val outputTarget: OutputTarget,
-    private val downloadListener: DownloadListener?
+    private val downloadListener: DownloadListener?,
+    private val retryTimes: Int = 3
 ) {
     private val parallelProgressListener =
         ParallelProgressListener(uriString = uriString, taskId = taskId, downloadListener)
@@ -52,7 +53,7 @@ class ParallelCacheWriter(
                     val cacheWriter = createRealCacheWriter(index, rangeCount, dataSpec)
                     try {
                         cacheWriters.add(cacheWriter)
-                        cacheWriter.cache()
+                        cacheWithRetry(cacheWriter)
                     } catch (cause: InterruptedIOException) {
                         mediaXLogger?.w(cause) { "ParallelCacheWriter catch InterruptedIOException($uriString)" }
                         throw CancellationException(
@@ -89,6 +90,23 @@ class ParallelCacheWriter(
                 val downloadException = cause.wrapAsDownloadFailedException(downloadUrl = uriString)
                 downloadListener?.onDownloadFailed(taskId, uriString, downloadException)
                 throw downloadException
+            }
+        }
+    }
+
+    private fun cacheWithRetry(cacheWriter: CacheWriter) {
+        // 最多执行retryTimes+1次，重试3次则最多执行4次
+        for (tryTime in 0..retryTimes) {
+            try {
+                mediaXLogger?.d { "cacheWithRetry($tryTime/$retryTimes) start..." }
+                cacheWriter.cache()
+                mediaXLogger?.d { "cacheWithRetry($tryTime/$retryTimes) success" }
+                break
+            } catch (cause: Throwable) {
+                // 主动中断的情况不需要重试
+                if (cause !is InterruptedIOException) {
+                    mediaXLogger?.e(cause) { "cacheWithRetry($tryTime/$retryTimes) failed" }
+                }
             }
         }
     }
@@ -132,7 +150,8 @@ class ParallelCacheWriter(
         val rangeCount =
             if (!isContentLengthKnown) 1 else rangeCountStrategy.getRangeCount(contentLength = estimateContentLength)
                 .coerceAtLeast(1)
-        val rangeLength = if (isContentLengthKnown) estimateContentLength / rangeCount else estimateContentLength
+        val rangeLength =
+            if (isContentLengthKnown) estimateContentLength / rangeCount else estimateContentLength
         mediaXLogger?.d { "Set range count to $rangeCount, estimateContentLength=$estimateContentLength, uriString=$uriString" }
         return (0 until rangeCount).map { index ->
             val rangeStart = rangeLength * index
