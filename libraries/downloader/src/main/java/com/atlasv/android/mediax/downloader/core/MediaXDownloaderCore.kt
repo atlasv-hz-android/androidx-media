@@ -43,12 +43,16 @@ class MediaXDownloaderCore(
         return mediaXCache.cache.isCacheComplete(uriString)
     }
 
+    /**
+     * [throwException] true: 抛出异常，由调用者自行处理
+     */
     suspend fun download(
         downloadUrl: String,
         taskId: String,
         outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy? = null,
-        downloadListener: DownloadListener?
+        downloadListener: DownloadListener?,
+        throwException: Boolean = false
     ): DownloadResult? {
         if (writerMap[taskId] != null) {
             throw IllegalStateException("Duplicate task of $downloadUrl")
@@ -70,6 +74,9 @@ class MediaXDownloaderCore(
         return try {
             cacheWriter.cache()
         } catch (cause: Throwable) {
+            if (throwException) {
+                throw cause
+            }
             // cacheWriter.cache()内部已处理完各种异常，此处只需要返回null
             null
         } finally {
