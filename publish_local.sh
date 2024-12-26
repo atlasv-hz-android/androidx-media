@@ -1,4 +1,4 @@
 ./gradlew :downloader:publishToMavenLocal
-./gradlew :effect-ext:publish
+./gradlew :effect-ext:publishToMavenLocal
 ./gradlew :lib-datasource:publishToMavenLocal
 ./gradlew :lib-effect:publishToMavenLocal

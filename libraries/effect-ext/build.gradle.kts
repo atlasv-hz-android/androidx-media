@@ -53,4 +53,6 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.atlasv.appcontext)
+
+    api(project(":lib-effect"))
 }
