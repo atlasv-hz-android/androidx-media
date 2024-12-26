@@ -80,3 +80,4 @@ libraries/datasource_cronet/libs/*
 
 # MIDI decoder extension
 libraries/decoder_midi/lib
+*.salive
