@@ -54,5 +54,7 @@ dependencies {
 
     implementation(libs.atlasv.appcontext)
 
+    implementation(libs.coil.base)
+
     api(project(":lib-effect"))
 }
