@@ -57,4 +57,5 @@ dependencies {
     implementation(libs.coil.base)
 
     api(project(":lib-effect"))
+    api(project(":lib-transformer"))
 }
