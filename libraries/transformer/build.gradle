@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 apply from: "$gradle.ext.androidxMediaSettingsDir/common_library_config.gradle"
+apply plugin: "com.atlasv.android.plugin.publishlib"
 android {
     namespace 'androidx.media3.transformer'
 
@@ -66,4 +67,3 @@ ext {
     releaseArtifactId = 'media3-transformer'
     releaseName = 'Media3 Transformer module'
 }
-apply from: '../../publish.gradle'
