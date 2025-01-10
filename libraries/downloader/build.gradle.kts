@@ -58,4 +58,5 @@ dependencies {
     debugApi(project(":lib-exoplayer-hls"))
 
     api(libs.atlasv.loader)
+    api(libs.atlasv.appcontext)
 }

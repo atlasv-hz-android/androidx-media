@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.media3.common.C
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
+import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
@@ -30,12 +31,8 @@ class MediaXDownloaderCore(
         ContentLengthLoader(okHttpClient)
     }
 
-    init {
-        globalAppContext = appContext
-    }
-
     private val writerMap = ConcurrentHashMap<String, ParallelCacheWriter>()
-    private val mediaXCache: MediaXCache by lazy {
+    val mediaXCache: MediaXCache by lazy {
         mediaXCacheSupplier.get()
     }
 
@@ -116,10 +113,9 @@ class MediaXDownloaderCore(
     }
 
     companion object {
-        private lateinit var globalAppContext: Context
         val databaseProvider: DatabaseProvider by lazy {
             // Note: This should be a singleton in your app.
-            StandaloneDatabaseProvider(globalAppContext)
+            StandaloneDatabaseProvider(appContext)
         }
     }
 }
