@@ -1,19 +1,19 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.kotlin.compose)
     id("com.atlasv.android.plugin.publishlib")
 }
 
 android {
-    namespace = "com.atlasv.android.mediax.downloader"
-    compileSdk = 34
+    namespace = "com.atlasv.android.mediax.composeui"
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
-        buildConfigField("String", "SDK_VERSION", "\"${project.property("LIB_VERSION")}\"")
     }
 
     buildTypes {
@@ -39,24 +39,16 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
 
+    implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    api(project(":lib-datasource"))
-    api(project(":lib-common-ktx"))
+    implementation(project(":lib-exoplayer"))
+    implementation(project(":lib-common-ktx"))
 
-    // Release
-    releaseApi(libs.androidx.media3.datasource.okhttp)
-    releaseApi(libs.androidx.media3.database)
-    releaseApi(libs.androidx.media3.exoplayer.hls)
-    // debug
-    debugApi(project(":lib-datasource-okhttp"))
-    debugApi(project(":lib-database"))
-    debugApi(project(":lib-exoplayer-hls"))
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
 
-    api(libs.atlasv.loader)
-    api(libs.atlasv.appcontext)
 }

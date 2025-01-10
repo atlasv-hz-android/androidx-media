@@ -1,7 +1,7 @@
-package com.atlasv.android.mediax.downloader.util
+package androidx.media3.common.util
 
 /**
- * Created by weiping on 2024/11/5
+ * Created by weiping on 2025/1/10
  */
 interface MediaXLogger {
     fun d(messageSupplier: () -> String)
@@ -10,4 +10,3 @@ interface MediaXLogger {
     fun w(cause: Throwable?, messageSupplier: () -> String)
     fun e(cause: Throwable?, messageSupplier: () -> String)
 }
-

@@ -14,6 +14,7 @@
 
 apply from: "$gradle.ext.androidxMediaSettingsDir/common_library_config.gradle"
 apply plugin: 'kotlin-android'
+apply plugin: "com.atlasv.android.plugin.publishlib"
 
 android {
     namespace 'androidx.media3.common.ktx'
@@ -54,4 +55,3 @@ ext {
     releaseArtifactId = 'media3-common-ktx'
     releaseName = 'Media3 common KTX module'
 }
-apply from: '../../publish.gradle'
