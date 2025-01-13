@@ -1,6 +1,5 @@
 package com.atlasv.android.mediax.downloader.core
 
-import android.content.Context
 import androidx.media3.common.C
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -21,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap
  * Created by weiping on 2024/9/7
  */
 class MediaXDownloaderCore(
-    appContext: Context,
     okHttpClient: OkHttpClient,
     mediaXCacheSupplier: MediaXCacheSupplier,
     private val defaultRangeCountStrategy: RangeCountStrategy = SimpleRangeStrategy.SingleRangeStrategy,

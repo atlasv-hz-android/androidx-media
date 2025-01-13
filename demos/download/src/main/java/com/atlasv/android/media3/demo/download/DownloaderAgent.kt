@@ -29,7 +29,6 @@ object DownloaderAgent : DownloadListener {
 
     val downloadCore by lazy {
         MediaXDownloaderCore(
-            appContext,
             okHttpClient,
             createCacheSupplier(),
             rootDownloadListener = this
