@@ -1,6 +1,8 @@
 package com.atlasv.android.mediax.downloader.core
 
+import android.content.Context
 import androidx.media3.common.C
+import androidx.media3.common.util.MediaXLogger
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
@@ -11,6 +13,7 @@ import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.feature.MediaXDownloaderClient
+import com.atlasv.android.mediax.downloader.feature.transform.MediaTrackMuxer
 import com.atlasv.android.mediax.downloader.listener.withParent
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
@@ -114,6 +117,14 @@ class MediaXDownloaderCore(
             // 暂停状态用户删除下载任务，需要走这个逻辑
             mediaXCache.cache.removeResourceWithTrack(id)
         }
+    }
+
+    fun asDownloaderClient(
+        appContext: Context,
+        mediaTrackMuxer: MediaTrackMuxer? = null,
+        logger: MediaXLogger? = null
+    ): MediaXDownloaderClient {
+        return MediaXDownloaderClient(appContext, this, mediaTrackMuxer, logger)
     }
 
     companion object {

@@ -24,7 +24,7 @@ import java.io.File
 class MediaXDownloaderClient(
     private val appContext: Context,
     private val core: MediaXDownloaderCore,
-    private val mediaTrackMuxer: MediaTrackMuxer,
+    private val mediaTrackMuxer: MediaTrackMuxer? = null,
     private val logger: MediaXLogger? = null
 ) {
     suspend fun download(
@@ -56,7 +56,7 @@ class MediaXDownloaderClient(
             if (containsAudio) {
                 return downloadResult
             }
-            if (!request.attachAudioUrl.isNullOrEmpty()) {
+            if (!request.attachAudioUrl.isNullOrEmpty() && mediaTrackMuxer != null) {
                 logger?.d { "No audio track found in $outputFile, will download audio from ${request.attachAudioUrl}" }
                 val destAudioFile = prepareAudioFile(request, outputTarget.targetFile.parentFile)
                 core.download(
@@ -90,6 +90,10 @@ class MediaXDownloaderClient(
             dir?.let { File(dir, destAudioFileName) }
                 ?: error("Can not create audio file: $request, dir=$dir")
         return destAudioFile
+    }
+
+    fun cancel(id: String, alsoDelete: Boolean = false) {
+        core.cancel(id, alsoDelete)
     }
 }
 
