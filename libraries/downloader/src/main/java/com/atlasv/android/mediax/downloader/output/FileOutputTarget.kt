@@ -8,7 +8,7 @@ import java.io.OutputStream
  * Created by weiping on 2024/11/28
  */
 class FileOutputTarget(private val targetFileSupplier: () -> File) : OutputTarget {
-    private val targetFile by lazy {
+    val targetFile by lazy {
         targetFileSupplier()
     }
 
@@ -24,4 +24,8 @@ class FileOutputTarget(private val targetFileSupplier: () -> File) : OutputTarge
     override fun onSucceed() {
         // do nothing
     }
+}
+
+fun File.asOutputTarget(): FileOutputTarget {
+    return FileOutputTarget(targetFileSupplier = { this })
 }

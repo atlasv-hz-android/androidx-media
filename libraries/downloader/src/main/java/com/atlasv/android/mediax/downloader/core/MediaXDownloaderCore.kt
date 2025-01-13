@@ -10,6 +10,7 @@ import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
 import com.atlasv.android.mediax.downloader.cache.isSingleRange
 import com.atlasv.android.mediax.downloader.datasource.isCacheComplete
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
+import com.atlasv.android.mediax.downloader.feature.MediaXDownloaderClient
 import com.atlasv.android.mediax.downloader.listener.withParent
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
@@ -17,6 +18,11 @@ import okhttp3.OkHttpClient
 import java.util.concurrent.ConcurrentHashMap
 
 /**
+ *
+ * 核心模块，实现最底层的下载目标：https 链接 -> 本地文件。
+ *
+ * 扩展功能在[MediaXDownloaderClient]实现
+ *
  * Created by weiping on 2024/9/7
  */
 class MediaXDownloaderCore(

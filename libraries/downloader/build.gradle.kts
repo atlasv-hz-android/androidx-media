@@ -47,6 +47,7 @@ dependencies {
 
     api(project(":lib-datasource"))
     api(project(":lib-common-ktx"))
+    api(libs.androidx.media3.exoplayer)
 
     // Release
     releaseApi(libs.androidx.media3.datasource.okhttp)
