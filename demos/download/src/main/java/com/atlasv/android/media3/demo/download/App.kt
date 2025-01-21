@@ -1,8 +1,8 @@
 package com.atlasv.android.media3.demo.download
 
 import android.app.Application
+import androidx.media3.common.util.MediaXLogger
 import com.atlasv.android.loader.ResourceContentLoader
-import com.atlasv.android.mediax.downloader.util.MediaXLogger
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr
 import timber.log.Timber
 
