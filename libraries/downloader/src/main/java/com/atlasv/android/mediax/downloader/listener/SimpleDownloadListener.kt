@@ -31,6 +31,9 @@ open class SimpleDownloadListener : DownloadListener {
     override fun onDownloadStart(taskId: String, downloadUrl: String) {
     }
 
+    override fun onDownloadRestart(taskId: String, downloadUrl: String) {
+    }
+
     override fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int) {
     }
 

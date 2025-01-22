@@ -25,6 +25,7 @@ interface DownloadListener {
 
     fun onDownloadSpeed(taskId: String, downloadUrl: String, bytesPerSecond: Long, rangeCount: Int)
     fun onDownloadStart(taskId: String, downloadUrl: String)
+    fun onDownloadRestart(taskId: String, downloadUrl: String)
     fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int)
     fun onSaveSuccess(
         taskId: String,

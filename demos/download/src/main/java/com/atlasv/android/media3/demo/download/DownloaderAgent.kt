@@ -87,6 +87,10 @@ object DownloaderAgent : DownloadListener {
         mediaXLogger?.d { "onDownloadStart: ($downloadUrl)" }
     }
 
+    override fun onDownloadRestart(taskId: String, downloadUrl: String) {
+        mediaXLogger?.w { "onDownloadRestart: ($downloadUrl)" }
+    }
+
     override fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int) {
         mediaXLogger?.d { "onDownloadSuccess: rangeCount=$rangeCount($downloadUrl)" }
     }

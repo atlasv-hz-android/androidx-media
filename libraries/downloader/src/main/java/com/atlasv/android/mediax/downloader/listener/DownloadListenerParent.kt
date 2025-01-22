@@ -48,6 +48,12 @@ class DownloadListenerParent(private val children: List<DownloadListener>) : Dow
         }
     }
 
+    override fun onDownloadRestart(taskId: String, downloadUrl: String) {
+        children.forEach { child ->
+            child.onDownloadRestart(taskId, downloadUrl)
+        }
+    }
+
     override fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int) {
         children.forEach { child ->
             child.onDownloadSuccess(taskId, downloadUrl, rangeCount)

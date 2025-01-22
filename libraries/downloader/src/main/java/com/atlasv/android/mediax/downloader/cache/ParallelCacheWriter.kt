@@ -4,6 +4,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
+import com.atlasv.android.mediax.downloader.datasource.getCachedBytes
 import com.atlasv.android.mediax.downloader.datasource.getContentLength
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
 import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
@@ -47,6 +48,8 @@ class ParallelCacheWriter(
     suspend fun cache(): DownloadResult {
         return coroutineScope {
             val dataSpecs = createDataSpecs()
+            val alreadyCacheBytes = mediaXCache.cache.getCachedBytes(taskId)
+            val isNewTask = alreadyCacheBytes <= 0
             val rangeCount = dataSpecs.size
             jobs = dataSpecs.mapIndexed { index, dataSpec ->
                 async {
@@ -67,7 +70,11 @@ class ParallelCacheWriter(
                 }
             }
             try {
-                downloadListener?.onDownloadStart(taskId, uriString)
+                if (isNewTask) {
+                    downloadListener?.onDownloadStart(taskId, uriString)
+                } else {
+                    downloadListener?.onDownloadRestart(taskId, uriString)
+                }
                 jobs?.awaitAll()
                 downloadListener?.onDownloadSuccess(taskId, uriString, rangeCount)
                 val fileLength = saveToOutputStream(uriString, outputTarget)
