@@ -8,6 +8,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.ContentMetadata
+import com.atlasv.android.mediax.downloader.exception.DataSpecSaveException
 import com.atlasv.android.mediax.downloader.output.OutputTarget
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 
@@ -15,9 +16,24 @@ import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
  * Created by weiping on 2024/9/8
  */
 
+fun DataSource.saveDataSpecOrThrow(
+    dataSpec: DataSpec, outputTarget: OutputTarget,
+    temporaryBuffer: ByteArray = ByteArray(
+        CacheWriter.DEFAULT_BUFFER_SIZE_BYTES
+    )
+) {
+    return try {
+        saveDataSpec(dataSpec, outputTarget, temporaryBuffer)
+    } catch (cause: Throwable) {
+        throw DataSpecSaveException(
+            message = "saveDataSpec failed, outputTarget=$outputTarget",
+            cause = cause
+        )
+    }
+}
 
 @OptIn(UnstableApi::class)
-fun DataSource.saveDataSpec(
+private fun DataSource.saveDataSpec(
     dataSpec: DataSpec, outputTarget: OutputTarget,
     temporaryBuffer: ByteArray = ByteArray(
         CacheWriter.DEFAULT_BUFFER_SIZE_BYTES

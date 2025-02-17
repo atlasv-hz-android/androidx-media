@@ -13,6 +13,7 @@ import com.atlasv.android.mediax.downloader.output.ContentUriOutputTarget
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.FileOutputTarget
 import com.atlasv.android.mediax.downloader.output.OutputTarget
+import com.atlasv.android.mediax.downloader.output.asUuidFileName
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import com.google.common.net.MediaType
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +70,7 @@ class MainViewModel : ViewModel() {
     }
 
     private fun createOutputTarget(downloadUrl: String, id: String): OutputTarget {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        return if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
             ContentUriOutputTarget(
                 appContext = App.app,
                 downloadUrl = downloadUrl,
@@ -84,7 +85,7 @@ class MainViewModel : ViewModel() {
                 targetFileSupplier = {
                     File(
                         appContext.getExternalFilesDir(null),
-                        "download-files/$id-${Uri.parse(downloadUrl).lastPathSegment}"
+                        "download-files/${Uri.parse(downloadUrl).lastPathSegment.asUuidFileName()}"
                     )
                 }
             )

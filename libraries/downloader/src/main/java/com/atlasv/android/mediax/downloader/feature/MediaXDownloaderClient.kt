@@ -16,6 +16,7 @@ import com.atlasv.android.mediax.downloader.feature.transform.MediaTrackMuxer
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.FileOutputTarget
 import com.atlasv.android.mediax.downloader.output.asOutputTarget
+import com.atlasv.android.mediax.downloader.output.asUuidFileName
 import java.io.File
 
 /**
@@ -84,8 +85,7 @@ class MediaXDownloaderClient(
 
     private fun prepareAudioFile(request: DownloadRequest, dir: File?): File {
         val destAudioFileName =
-            Uri.parse(request.attachAudioUrl)?.lastPathSegment
-                ?: error("Can not create audio file name: $request")
+            Uri.parse(request.attachAudioUrl)?.lastPathSegment.asUuidFileName()
         val destAudioFile =
             dir?.let { File(dir, destAudioFileName) }
                 ?: error("Can not create audio file: $request, dir=$dir")

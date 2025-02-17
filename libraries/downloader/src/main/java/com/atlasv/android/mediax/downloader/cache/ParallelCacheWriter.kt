@@ -7,7 +7,7 @@ import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.getCachedBytes
 import com.atlasv.android.mediax.downloader.datasource.getContentLength
 import com.atlasv.android.mediax.downloader.datasource.removeResourceWithTrack
-import com.atlasv.android.mediax.downloader.datasource.saveDataSpec
+import com.atlasv.android.mediax.downloader.datasource.saveDataSpecOrThrow
 import com.atlasv.android.mediax.downloader.exception.isIoCancelException
 import com.atlasv.android.mediax.downloader.exception.wrapAsDownloadFailedException
 import com.atlasv.android.mediax.downloader.output.DownloadResult
@@ -147,7 +147,7 @@ class ParallelCacheWriter(
     ): Long {
         val dataSource = mediaXCache.createDataSource()
         val dataSpec = createDataSpecBuilder(key = taskId, uriString = uriString).build()
-        dataSource.saveDataSpec(dataSpec, outputTarget)
+        dataSource.saveDataSpecOrThrow(dataSpec, outputTarget)
         val cacheKey = mediaXCache.cacheKeyFactory.buildCacheKey(dataSpec)
         val contentLength = mediaXCache.cache.getContentLength(cacheKey)
         mediaXCache.cache.removeResourceWithTrack(cacheKey)
