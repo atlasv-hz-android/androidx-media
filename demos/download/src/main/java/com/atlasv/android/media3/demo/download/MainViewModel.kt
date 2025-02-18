@@ -85,7 +85,11 @@ class MainViewModel : ViewModel() {
                 targetFileSupplier = {
                     File(
                         appContext.getExternalFilesDir(null),
-                        "download-files/${Uri.parse(downloadUrl).lastPathSegment.asUuidFileName()}"
+                        "download-files/${
+                            Uri.parse(downloadUrl).lastPathSegment.asUuidFileName(
+                                MediaType.ANY_VIDEO_TYPE
+                            )
+                        }"
                     )
                 }
             )

@@ -1,5 +1,7 @@
 package com.atlasv.android.mediax.downloader.output
 
+import androidx.media3.common.guessSubtype
+import com.google.common.net.MediaType
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
@@ -31,8 +33,8 @@ fun File.asOutputTarget(): FileOutputTarget {
     return FileOutputTarget(targetFileSupplier = { this })
 }
 
-fun String?.asUuidFileName(): String {
-    val type = this?.substringAfterLast(".", "").orEmpty()
+fun String?.asUuidFileName(mediaType: MediaType): String {
+    val type = this?.substringAfterLast(".", mediaType.guessSubtype()).orEmpty()
     val suffix = if (type.isNotEmpty()) ".$type" else ""
     return UUID.randomUUID().toString() + suffix
 }

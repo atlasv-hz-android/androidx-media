@@ -85,7 +85,7 @@ class MediaXDownloaderClient(
 
     private fun prepareAudioFile(request: DownloadRequest, dir: File?): File {
         val destAudioFileName =
-            Uri.parse(request.attachAudioUrl)?.lastPathSegment.asUuidFileName()
+            Uri.parse(request.attachAudioUrl)?.lastPathSegment.asUuidFileName(request.mediaType)
         val destAudioFile =
             dir?.let { File(dir, destAudioFileName) }
                 ?: error("Can not create audio file: $request, dir=$dir")
