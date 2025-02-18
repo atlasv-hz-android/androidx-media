@@ -34,7 +34,11 @@ fun File.asOutputTarget(): FileOutputTarget {
 }
 
 fun String?.asUuidFileName(mediaType: MediaType): String {
-    val type = this?.substringAfterLast(".", mediaType.guessSubtype()).orEmpty()
-    val suffix = if (type.isNotEmpty()) ".$type" else ""
+    val format = this?.substringAfterLast(".", mediaType.guessSubtype()).orEmpty()
+    return asUuidFileName(format)
+}
+
+fun asUuidFileName(format: String): String {
+    val suffix = if (format.isNotEmpty()) ".$format" else ""
     return UUID.randomUUID().toString() + suffix
 }
