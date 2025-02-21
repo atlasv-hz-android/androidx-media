@@ -17,6 +17,9 @@ interface VideoExportRecordDao {
     @Query("SELECT * FROM video_export_record ORDER BY createAt DESC")
     fun getAllAsFlow(): Flow<List<VideoExportRecord>>
 
+    @Query("SELECT * FROM video_export_record ORDER BY createAt DESC LIMIT 1")
+    fun getNewestRecord(): VideoExportRecord?
+
     @Query("DELETE FROM video_export_record WHERE taskId=:taskId")
     fun deleteByTaskId(taskId: String)
 }
