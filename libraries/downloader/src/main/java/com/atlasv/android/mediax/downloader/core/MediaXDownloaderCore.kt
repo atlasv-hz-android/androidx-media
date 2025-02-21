@@ -17,6 +17,11 @@ import com.atlasv.android.mediax.downloader.feature.transform.MediaTrackMuxer
 import com.atlasv.android.mediax.downloader.listener.withParent
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
+import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.util.concurrent.ConcurrentHashMap
 
@@ -41,6 +46,10 @@ class MediaXDownloaderCore(
     private val writerMap = ConcurrentHashMap<String, ParallelCacheWriter>()
     val mediaXCache: MediaXCache by lazy {
         mediaXCacheSupplier.get()
+    }
+
+    private val ioSemaphore by lazy {
+        Semaphore(permits = 6)
     }
 
     fun isFullyCached(uriString: String): Boolean {
@@ -76,7 +85,11 @@ class MediaXDownloaderCore(
                 estimateContentLength
             )
         return try {
-            cacheWriter.cache()
+            withContext(Dispatchers.IO) {
+                ioSemaphore.withPermit {
+                    cacheWriter.cache()
+                }
+            }
         } catch (cause: Throwable) {
             if (throwException) {
                 throw cause
@@ -103,7 +116,8 @@ class MediaXDownloaderCore(
             rangeCountStrategy = rangeCountStrategy,
             estimateContentLength = estimateContentLength,
             outputTarget = outputTarget,
-            downloadListener = downloadListener
+            downloadListener = downloadListener,
+            logger = MediaXLoggerMgr.mediaXCacheWriterLogger
         )
         writerMap[id] = writer
         return writer

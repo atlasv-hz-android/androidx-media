@@ -1,5 +1,6 @@
 package com.atlasv.android.mediax.downloader.cache
 
+import androidx.media3.common.util.MediaXLogger
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
 import com.atlasv.android.mediax.downloader.core.DownloadListener
@@ -12,7 +13,6 @@ import com.atlasv.android.mediax.downloader.exception.isIoCancelException
 import com.atlasv.android.mediax.downloader.exception.wrapAsDownloadFailedException
 import com.atlasv.android.mediax.downloader.output.DownloadResult
 import com.atlasv.android.mediax.downloader.output.OutputTarget
-import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -31,7 +31,8 @@ class ParallelCacheWriter(
     private val estimateContentLength: Long,
     private val outputTarget: OutputTarget,
     private val downloadListener: DownloadListener?,
-    private val retryTimes: Int = 3
+    private val retryTimes: Int = 3,
+    private val logger: MediaXLogger? = null
 ) {
     private val parallelProgressListener =
         ParallelProgressListener(uriString = uriString, taskId = taskId, downloadListener)
@@ -58,13 +59,13 @@ class ParallelCacheWriter(
                         cacheWriters.add(cacheWriter)
                         cacheWithRetry(cacheWriter)
                     } catch (cause: InterruptedIOException) {
-                        mediaXLogger?.w(cause) { "ParallelCacheWriter catch InterruptedIOException($uriString)" }
+                        logger?.w(cause) { "ParallelCacheWriter catch InterruptedIOException($uriString)" }
                         throw CancellationException(
                             "ParallelCacheWriter canceled by InterruptedIOException",
                             cause
                         )
                     } catch (cause: Throwable) {
-                        mediaXLogger?.e(cause) { "ParallelCacheWriter catch ${cause.javaClass.simpleName}($uriString)" }
+                        logger?.e(cause) { "ParallelCacheWriter catch ${cause.javaClass.simpleName}($uriString)" }
                         throw cause
                     }
                 }
@@ -76,15 +77,17 @@ class ParallelCacheWriter(
                     downloadListener?.onDownloadRestart(taskId, uriString)
                 }
                 jobs?.awaitAll()
+                logger?.d { "[${Thread.currentThread().name}]onDownloadSuccess: uriString=$uriString, taskId=$taskId" }
                 downloadListener?.onDownloadSuccess(taskId, uriString, rangeCount)
                 val fileLength = saveToOutputStream(uriString, outputTarget)
+                logger?.d { "[${Thread.currentThread().name}]onSaveSuccess($fileLength): uriString=$uriString, taskId=$taskId" }
                 downloadListener?.onSaveSuccess(taskId, uriString, fileLength, outputTarget)
                 DownloadResult(taskId = taskId, uriString, outputTarget, fileLength)
             } catch (cause: CancellationException) {
                 if (needDelete) {
                     deleteResource(uriString)
                 } else {
-                    mediaXLogger?.d { "ParallelCacheWriter all jobs are canceled($uriString)" }
+                    logger?.d { "ParallelCacheWriter all jobs are canceled($uriString)" }
                 }
                 val realReason = cause.cause
                     ?.takeIf { !it.isIoCancelException() }
@@ -105,14 +108,14 @@ class ParallelCacheWriter(
         // 最多执行retryTimes+1次，重试3次则最多执行4次
         for (runTimes in 0..retryTimes) {
             try {
-                mediaXLogger?.d { "cacheWithRetry($runTimes/$retryTimes) start..." }
+                logger?.d { "[${Thread.currentThread().name}]cacheWithRetry($runTimes/$retryTimes) start..." }
                 cacheWriter.cache()
-                mediaXLogger?.d { "cacheWithRetry($runTimes/$retryTimes) success" }
+                logger?.d { "[${Thread.currentThread().name}]cacheWithRetry($runTimes/$retryTimes) success" }
                 break
             } catch (cause: Throwable) {
                 // 主动中断的情况不需要重试
                 if (cause !is InterruptedIOException && runTimes < retryTimes) {
-                    mediaXLogger?.e(cause) { "cacheWithRetry($runTimes/$retryTimes) failed, will retry" }
+                    logger?.e(cause) { "cacheWithRetry($runTimes/$retryTimes) failed, will retry" }
                 } else {
                     throw cause
                 }
@@ -133,7 +136,7 @@ class ParallelCacheWriter(
     }
 
     private fun deleteResource(uriString: String) {
-        mediaXLogger?.w { "ParallelCacheWriter jobs are deleted, will remove resource($uriString)" }
+        logger?.w { "[${Thread.currentThread().name}]ParallelCacheWriter jobs are deleted, will remove resource($uriString)" }
         mediaXCache.cache.removeResourceWithTrack(uriString)
     }
 
@@ -161,7 +164,7 @@ class ParallelCacheWriter(
                 .coerceAtLeast(1)
         val rangeLength =
             if (isContentLengthKnown) estimateContentLength / rangeCount else estimateContentLength
-        mediaXLogger?.d { "Set range count to $rangeCount, estimateContentLength=$estimateContentLength, uriString=$uriString" }
+        logger?.d { "[${Thread.currentThread().name}]Set range count to $rangeCount, estimateContentLength=$estimateContentLength, uriString=$uriString" }
         return (0 until rangeCount).map { index ->
             val rangeStart = rangeLength * index
             val dataSpec =
@@ -172,7 +175,7 @@ class ParallelCacheWriter(
                             setLength(rangeLength)
                         }
                     }.build()
-            mediaXLogger?.d { "Build DataSpec: $dataSpec" }
+            logger?.d { "[${Thread.currentThread().name}]Build DataSpec: $dataSpec" }
             dataSpec
         }
     }
@@ -184,7 +187,7 @@ class ParallelCacheWriter(
                 it.cancel()
             }
         } catch (cause: Throwable) {
-            mediaXLogger?.e(cause) { "ParallelCacheWriter cancel exception occurred($uriString)" }
+            logger?.e(cause) { "ParallelCacheWriter cancel exception occurred($uriString)" }
         }
     }
 }
