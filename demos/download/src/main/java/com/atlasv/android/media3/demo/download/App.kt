@@ -3,6 +3,7 @@ package com.atlasv.android.media3.demo.download
 import android.app.Application
 import androidx.media3.common.util.MediaXLogger
 import com.atlasv.android.loader.ResourceContentLoader
+import com.atlasv.android.mediax.downloader.util.MediaXLoggerFactory
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr
 import timber.log.Timber
 
@@ -17,30 +18,37 @@ class App : Application() {
         ResourceContentLoader.loggerProvider = {
             Timber.tag("res-load")
         }
-        MediaXLoggerMgr.mediaXLogger = object : MediaXLogger {
-            override fun d(messageSupplier: () -> String) {
-                Timber.tag("res-load-mediax").d(messageSupplier)
+        MediaXLoggerMgr.loggerFactory = object : MediaXLoggerFactory {
+            override fun createLogger(tag: String): MediaXLogger {
+                return LoggerImpl(tag)
             }
 
-            override fun w(messageSupplier: () -> String) {
-                Timber.tag("res-load-mediax").w(messageSupplier)
-            }
-
-            override fun w(cause: Throwable?, messageSupplier: () -> String) {
-                Timber.tag("res-load-mediax").w(cause, messageSupplier)
-            }
-
-            override fun e(messageSupplier: () -> String) {
-                Timber.tag("res-load-mediax").e(messageSupplier)
-            }
-
-            override fun e(cause: Throwable?, messageSupplier: () -> String) {
-                Timber.tag("res-load-mediax").e(cause, messageSupplier)
-            }
         }
     }
 
     companion object {
         lateinit var app: App
+    }
+}
+
+private class LoggerImpl(private val tag: String) : MediaXLogger {
+    override fun d(messageSupplier: () -> String) {
+        Timber.tag("res-load-mediax").d(messageSupplier)
+    }
+
+    override fun w(messageSupplier: () -> String) {
+        Timber.tag("res-load-mediax").w(messageSupplier)
+    }
+
+    override fun w(cause: Throwable?, messageSupplier: () -> String) {
+        Timber.tag("res-load-mediax").w(cause, messageSupplier)
+    }
+
+    override fun e(messageSupplier: () -> String) {
+        Timber.tag("res-load-mediax").e(messageSupplier)
+    }
+
+    override fun e(cause: Throwable?, messageSupplier: () -> String) {
+        Timber.tag("res-load-mediax").e(cause, messageSupplier)
     }
 }
