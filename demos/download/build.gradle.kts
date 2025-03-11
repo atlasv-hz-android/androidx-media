@@ -68,7 +68,7 @@ dependencies {
     implementation(project(":downloader"))
     implementation(project(":lib-exoplayer"))
     implementation(libs.atlasv.loader)
-    implementation(libs.log)
+    implementation(libs.timber)
     implementation(libs.okhttp)
 
 }
