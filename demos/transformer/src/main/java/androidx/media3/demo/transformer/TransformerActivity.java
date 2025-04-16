@@ -15,26 +15,33 @@
  */
 package androidx.media3.demo.transformer;
 
-import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
-import static android.Manifest.permission.READ_MEDIA_VIDEO;
+import static android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION;
 import static androidx.media3.common.util.Assertions.checkNotNull;
 import static androidx.media3.common.util.Assertions.checkState;
-import static androidx.media3.common.util.Util.SDK_INT;
 import static androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
 import static androidx.media3.exoplayer.DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
 import static androidx.media3.transformer.Transformer.PROGRESS_STATE_NOT_STARTED;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -46,10 +53,13 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media3.common.C;
 import androidx.media3.common.DebugViewProvider;
 import androidx.media3.common.Effect;
@@ -64,8 +74,6 @@ import androidx.media3.common.util.Log;
 import androidx.media3.common.util.Util;
 import androidx.media3.datasource.DataSourceBitmapLoader;
 import androidx.media3.effect.BitmapOverlay;
-import androidx.media3.effect.Brightness;
-import androidx.media3.effect.ColorTemperature;
 import androidx.media3.effect.Contrast;
 import androidx.media3.effect.DebugTraceUtil;
 import androidx.media3.effect.DrawableOverlay;
@@ -74,15 +82,13 @@ import androidx.media3.effect.GlShaderProgram;
 import androidx.media3.effect.HslAdjustment;
 import androidx.media3.effect.LanczosResample;
 import androidx.media3.effect.OverlayEffect;
-import androidx.media3.effect.OverlaySettings;
 import androidx.media3.effect.Presentation;
 import androidx.media3.effect.RgbAdjustment;
 import androidx.media3.effect.RgbFilter;
 import androidx.media3.effect.RgbMatrix;
-import androidx.media3.effect.Saturation;
 import androidx.media3.effect.ScaleAndRotateTransformation;
-import androidx.media3.effect.Sharpen;
 import androidx.media3.effect.SingleColorLut;
+import androidx.media3.effect.StaticOverlaySettings;
 import androidx.media3.effect.TextOverlay;
 import androidx.media3.effect.TextureOverlay;
 import androidx.media3.exoplayer.DefaultLoadControl;
@@ -97,12 +103,16 @@ import androidx.media3.transformer.Effects;
 import androidx.media3.transformer.ExperimentalAnalyzerModeFactory;
 import androidx.media3.transformer.ExportException;
 import androidx.media3.transformer.ExportResult;
-import androidx.media3.transformer.InAppMuxer;
+import androidx.media3.transformer.InAppFragmentedMp4Muxer;
+import androidx.media3.transformer.InAppMp4Muxer;
 import androidx.media3.transformer.JsonUtil;
+import androidx.media3.transformer.MediaProjectionAssetLoader;
 import androidx.media3.transformer.ProgressHolder;
 import androidx.media3.transformer.Transformer;
+import androidx.media3.transformer.VideoEncoderSettings;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import androidx.media3.ui.PlayerView;
+import androidx.window.layout.WindowMetricsCalculator;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.common.base.Stopwatch;
@@ -113,29 +123,24 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
- * An {@link Activity} that exports and plays media using {@link Transformer}.
- */
+/** An {@link Activity} that exports and plays media using {@link Transformer}. */
 public final class TransformerActivity extends AppCompatActivity {
-
   private static final String TAG = "TransformerActivity";
   private static final int IMAGE_DURATION_MS = 5_000;
-  private static final int IMAGE_FRAME_RATE_FPS = 30;
+  private static final int DEFAULT_FRAME_RATE_FPS = 30;
   private static int LOAD_CONTROL_MIN_BUFFER_MS = 5_000;
   private static int LOAD_CONTROL_MAX_BUFFER_MS = 5_000;
 
   private Button displayInputButton;
   private MaterialCardView inputCardView;
+  private MaterialCardView outputCardView;
   private TextView inputTextView;
   private ImageView inputImageView;
   private PlayerView inputPlayerView;
@@ -147,21 +152,18 @@ public final class TransformerActivity extends AppCompatActivity {
   private LinearProgressIndicator progressIndicator;
   private Button pauseButton;
   private Button resumeButton;
+  private Button stopCaptureButton;
   private Stopwatch exportStopwatch;
   private AspectRatioFrameLayout debugFrame;
 
-  @Nullable
-  private DebugTextViewHelper debugTextViewHelper;
-  @Nullable
-  private ExoPlayer inputPlayer;
-  @Nullable
-  private ExoPlayer outputPlayer;
-  @Nullable
-  private Transformer transformer;
-  @Nullable
-  private File outputFile;
-  @Nullable
-  private File oldOutputFile;
+  @Nullable private DebugTextViewHelper debugTextViewHelper;
+  @Nullable private Intent screenCaptureToken;
+  @Nullable private MediaProjection mediaProjection;
+  @Nullable private ExoPlayer inputPlayer;
+  @Nullable private ExoPlayer outputPlayer;
+  @Nullable private Transformer transformer;
+  @Nullable private File outputFile;
+  @Nullable private File oldOutputFile;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -169,6 +171,7 @@ public final class TransformerActivity extends AppCompatActivity {
     setContentView(R.layout.transformer_activity);
 
     inputCardView = findViewById(R.id.input_card_view);
+    outputCardView = findViewById(R.id.output_card_view);
     inputTextView = findViewById(R.id.input_text_view);
     inputImageView = findViewById(R.id.input_image_view);
     inputPlayerView = findViewById(R.id.input_player_view);
@@ -182,6 +185,8 @@ public final class TransformerActivity extends AppCompatActivity {
     pauseButton.setOnClickListener(view -> pauseExport());
     resumeButton = findViewById(R.id.resume_button);
     resumeButton.setOnClickListener(view -> startExport());
+    stopCaptureButton = findViewById(R.id.stop_capture_button);
+    stopCaptureButton.setOnClickListener(view -> mediaProjection.stop());
     debugFrame = findViewById(R.id.debug_aspect_ratio_frame_layout);
     displayInputButton = findViewById(R.id.display_input_button);
     displayInputButton.setOnClickListener(view -> toggleInputVideoDisplay());
@@ -200,7 +205,10 @@ public final class TransformerActivity extends AppCompatActivity {
   protected void onStart() {
     super.onStart();
 
-    startExport();
+    // Restart exporting, unless this is a capture session which can run in the background.
+    if (!isUsingMediaProjection()) {
+      startExport();
+    }
 
     inputPlayerView.onResume();
     outputPlayerView.onResume();
@@ -210,32 +218,72 @@ public final class TransformerActivity extends AppCompatActivity {
   protected void onStop() {
     super.onStop();
 
-    if (transformer != null) {
-      transformer.cancel();
-      transformer = null;
-    }
-
-    // The stop watch is reset after cancelling the export, in case cancelling causes the stop watch
-    // to be stopped in a transformer callback.
-    exportStopwatch.reset();
-
     inputPlayerView.onPause();
     outputPlayerView.onPause();
-    releasePlayer();
 
-    outputFile.delete();
-    outputFile = null;
-    if (oldOutputFile != null) {
-      oldOutputFile.delete();
-      oldOutputFile = null;
+    // Keep the capture session going to allow capturing other apps while backgrounded.
+    if (!isUsingMediaProjection()) {
+      releasePlayers();
+      cleanUpExport();
     }
   }
 
-  private void startExport() {
-    requestReadVideoPermission(/* activity= */ this);
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
 
+    if (isUsingMediaProjection()) {
+      releasePlayers();
+      mediaProjection.stop();
+      mediaProjection = null;
+      screenCaptureToken = null;
+    }
+    cleanUpExport();
+  }
+
+  private void startExport() {
     Intent intent = getIntent();
     Uri inputUri = checkNotNull(intent.getData());
+
+    if (inputUri.toString().equals("transformer_surface_asset:media_projection")
+        && screenCaptureToken == null) {
+      // MediaProjection can only start once the foreground service is running.
+      MediaProjectionManager mediaProjectionManager =
+          (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
+      Context context = this;
+      LocalBroadcastManager.getInstance(context)
+          .registerReceiver(
+              new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                  String action = checkNotNull(intent.getAction());
+                  if (action.equals(DemoMediaProjectionService.ACTION_EVENT_STARTED)) {
+                    LocalBroadcastManager.getInstance(context)
+                        .unregisterReceiver(/* receiver= */ this);
+                    // The service has started so media projection can start.
+                    startExport();
+                  }
+                }
+              },
+              new IntentFilter(DemoMediaProjectionService.ACTION_EVENT_STARTED));
+      registerForActivityResult(
+              new ActivityResultContracts.StartActivityForResult(),
+              activityResult -> {
+                int resultCode = activityResult.getResultCode();
+                if (resultCode == RESULT_OK) {
+                  screenCaptureToken = activityResult.getData();
+                  Intent startServiceIntent = new Intent(context, DemoMediaProjectionService.class);
+                  ContextCompat.startForegroundService(context, startServiceIntent);
+                } else if (resultCode == RESULT_CANCELED) {
+                  finish();
+                }
+              })
+          .launch(mediaProjectionManager.createScreenCaptureIntent());
+      inputCardView.setVisibility(View.GONE);
+      outputCardView.setVisibility(View.GONE);
+      return;
+    }
+
     try {
       outputFile =
           createExternalCacheFile("transformer-output-" + Clock.DEFAULT.elapsedRealtime() + ".mp4");
@@ -245,6 +293,7 @@ public final class TransformerActivity extends AppCompatActivity {
     String outputFilePath = outputFile.getAbsolutePath();
     @Nullable Bundle bundle = intent.getExtras();
     MediaItem mediaItem = createMediaItem(bundle, inputUri);
+    Util.maybeRequestReadStoragePermission(/* activity= */ this, mediaItem);
     Transformer transformer = createTransformer(bundle, inputUri, outputFilePath);
     Composition composition = createComposition(mediaItem, bundle);
     exportStopwatch.reset();
@@ -261,10 +310,20 @@ public final class TransformerActivity extends AppCompatActivity {
     outputVideoTextView.setVisibility(View.GONE);
     debugTextView.setVisibility(View.GONE);
     informationTextView.setText(R.string.export_started);
+    outputCardView.setVisibility(View.VISIBLE);
     progressViewGroup.setVisibility(View.VISIBLE);
     pauseButton.setVisibility(View.VISIBLE);
     resumeButton.setVisibility(View.GONE);
     progressIndicator.setProgress(0);
+    if (isUsingMediaProjection()) {
+      pauseButton.setVisibility(View.GONE);
+      resumeButton.setVisibility(View.GONE);
+      stopCaptureButton.setVisibility(View.VISIBLE);
+    } else {
+      pauseButton.setVisibility(View.VISIBLE);
+      resumeButton.setVisibility(View.GONE);
+      stopCaptureButton.setVisibility(View.GONE);
+    }
     Handler mainHandler = new Handler(getMainLooper());
     ProgressHolder progressHolder = new ProgressHolder();
     mainHandler.post(
@@ -330,21 +389,16 @@ public final class TransformerActivity extends AppCompatActivity {
         transformerBuilder.setVideoMimeType(videoMimeType);
       }
 
-      transformerBuilder.setEncoderFactory(
-          new DefaultEncoderFactory.Builder(this.getApplicationContext())
-              .setEnableFallback(bundle.getBoolean(ConfigurationActivity.ENABLE_FALLBACK))
-              .build());
-
       if (!bundle.getBoolean(ConfigurationActivity.ABORT_SLOW_EXPORT)) {
         transformerBuilder.setMaxDelayBetweenMuxerSamplesMs(C.TIME_UNSET);
       }
 
-      if (bundle.getBoolean(ConfigurationActivity.USE_MEDIA3_MUXER)) {
-        transformerBuilder.setMuxerFactory(
-            new InAppMuxer.Factory.Builder()
-                .setOutputFragmentedMp4(
-                    bundle.getBoolean(ConfigurationActivity.PRODUCE_FRAGMENTED_MP4))
-                .build());
+      if (bundle.getBoolean(ConfigurationActivity.USE_MEDIA3_MP4_MUXER)) {
+        transformerBuilder.setMuxerFactory(new InAppMp4Muxer.Factory());
+      }
+
+      if (bundle.getBoolean(ConfigurationActivity.USE_MEDIA3_FRAGMENTED_MP4_MUXER)) {
+        transformerBuilder.setMuxerFactory(new InAppFragmentedMp4Muxer.Factory());
       }
 
       if (bundle.getBoolean(ConfigurationActivity.ENABLE_DEBUG_PREVIEW)) {
@@ -357,12 +411,36 @@ public final class TransformerActivity extends AppCompatActivity {
       }
     }
 
+    VideoEncoderSettings videoEncoderSettings = VideoEncoderSettings.DEFAULT;
+    if (screenCaptureToken != null) {
+      MediaProjectionManager mediaProjectionManager =
+          (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
+      MediaProjection mediaProjection =
+          mediaProjectionManager.getMediaProjection(RESULT_OK, checkNotNull(screenCaptureToken));
+      Rect bounds =
+          WindowMetricsCalculator.getOrCreate()
+              .computeCurrentWindowMetrics(/* activity= */ this)
+              .getBounds();
+      int densityDpi = getResources().getConfiguration().densityDpi;
+      transformerBuilder.setAssetLoaderFactory(
+          new MediaProjectionAssetLoader.Factory(mediaProjection, bounds, densityDpi));
+      this.mediaProjection = mediaProjection;
+      videoEncoderSettings =
+          videoEncoderSettings
+              .buildUpon()
+              .setRepeatPreviousFrameIntervalUs(C.MICROS_PER_SECOND / DEFAULT_FRAME_RATE_FPS)
+              .build();
+    }
+    transformerBuilder.setEncoderFactory(
+        new DefaultEncoderFactory.Builder(this.getApplicationContext())
+            .setEnableFallback(bundle.getBoolean(ConfigurationActivity.ENABLE_FALLBACK))
+            .setRequestedVideoEncoderSettings(videoEncoderSettings)
+            .build());
+
     return transformerBuilder.build();
   }
 
-  /**
-   * Creates a cache file, resetting it if it already exists.
-   */
+  /** Creates a cache file, resetting it if it already exists. */
   private File createExternalCacheFile(String fileName) throws IOException {
     File file = new File(getExternalCacheDir(), fileName);
     if (file.exists() && !file.delete()) {
@@ -377,7 +455,7 @@ public final class TransformerActivity extends AppCompatActivity {
   private Composition createComposition(MediaItem mediaItem, @Nullable Bundle bundle) {
     EditedMediaItem.Builder editedMediaItemBuilder = new EditedMediaItem.Builder(mediaItem);
     // For image inputs. Automatically ignored if input is audio/video.
-    editedMediaItemBuilder.setFrameRate(IMAGE_FRAME_RATE_FPS);
+    editedMediaItemBuilder.setFrameRate(DEFAULT_FRAME_RATE_FPS);
     if (bundle != null) {
       ImmutableList<AudioProcessor> audioProcessors = createAudioProcessorsFromBundle(bundle);
       ImmutableList<Effect> videoEffects = createVideoEffectsFromBundle(bundle);
@@ -412,13 +490,17 @@ public final class TransformerActivity extends AppCompatActivity {
     ImmutableList.Builder<AudioProcessor> processors = new ImmutableList.Builder<>();
 
     if (selectedAudioEffects[ConfigurationActivity.HIGH_PITCHED_INDEX]
-        || selectedAudioEffects[ConfigurationActivity.SAMPLE_RATE_INDEX]) {
+        || selectedAudioEffects[ConfigurationActivity.SAMPLE_RATE_48K_INDEX]
+        || selectedAudioEffects[ConfigurationActivity.SAMPLE_RATE_96K_INDEX]) {
       SonicAudioProcessor sonicAudioProcessor = new SonicAudioProcessor();
       if (selectedAudioEffects[ConfigurationActivity.HIGH_PITCHED_INDEX]) {
         sonicAudioProcessor.setPitch(2f);
       }
-      if (selectedAudioEffects[ConfigurationActivity.SAMPLE_RATE_INDEX]) {
+      if (selectedAudioEffects[ConfigurationActivity.SAMPLE_RATE_48K_INDEX]) {
         sonicAudioProcessor.setOutputSampleRateHz(48_000);
+      }
+      if (selectedAudioEffects[ConfigurationActivity.SAMPLE_RATE_96K_INDEX]) {
+        sonicAudioProcessor.setOutputSampleRateHz(96_000);
       }
       processors.add(sonicAudioProcessor);
     }
@@ -435,20 +517,9 @@ public final class TransformerActivity extends AppCompatActivity {
     if (mixToMono || scaleVolumeToHalf) {
       ChannelMixingAudioProcessor mixingAudioProcessor = new ChannelMixingAudioProcessor();
       for (int inputChannelCount = 1; inputChannelCount <= 6; inputChannelCount++) {
-        ChannelMixingMatrix matrix;
-        if (mixToMono) {
-          float[] mixingCoefficients = new float[inputChannelCount];
-          // Each channel is equally weighted in the mix to mono.
-          Arrays.fill(mixingCoefficients, 1f / inputChannelCount);
-          matrix =
-              new ChannelMixingMatrix(
-                  inputChannelCount, /* outputChannelCount= */ 1, mixingCoefficients);
-        } else {
-          // Identity matrix.
-          matrix =
-              ChannelMixingMatrix.create(
-                  inputChannelCount, /* outputChannelCount= */ inputChannelCount);
-        }
+        ChannelMixingMatrix matrix =
+            ChannelMixingMatrix.createForConstantPower(
+                inputChannelCount, /* outputChannelCount= */ mixToMono ? 1 : inputChannelCount);
 
         // Apply the volume adjustment.
         mixingAudioProcessor.putChannelMixingMatrix(
@@ -519,8 +590,8 @@ public final class TransformerActivity extends AppCompatActivity {
           // uses a linear RGB color space internally. Meaning this is only for demonstration
           // purposes and it does not display a correct sepia frame.
           float[] sepiaMatrix = {
-              0.393f, 0.349f, 0.272f, 0, 0.769f, 0.686f, 0.534f, 0, 0.189f, 0.168f, 0.131f, 0, 0, 0,
-              0, 1
+            0.393f, 0.349f, 0.272f, 0, 0.769f, 0.686f, 0.534f, 0, 0.189f, 0.168f, 0.131f, 0, 0, 0,
+            0, 1
           };
           effects.add((RgbMatrix) (presentationTimeUs, useHdr) -> sepiaMatrix);
           break;
@@ -574,9 +645,9 @@ public final class TransformerActivity extends AppCompatActivity {
                       bundle.getFloat(ConfigurationActivity.PERIODIC_VIGNETTE_CENTER_X),
                       bundle.getFloat(ConfigurationActivity.PERIODIC_VIGNETTE_CENTER_Y),
                       /* minInnerRadius= */ bundle.getFloat(
-                      ConfigurationActivity.PERIODIC_VIGNETTE_INNER_RADIUS),
+                          ConfigurationActivity.PERIODIC_VIGNETTE_INNER_RADIUS),
                       /* maxInnerRadius= */ bundle.getFloat(
-                      ConfigurationActivity.PERIODIC_VIGNETTE_OUTER_RADIUS),
+                          ConfigurationActivity.PERIODIC_VIGNETTE_OUTER_RADIUS),
                       bundle.getFloat(ConfigurationActivity.PERIODIC_VIGNETTE_OUTER_RADIUS)));
     }
     if (selectedEffects[ConfigurationActivity.SPIN_3D_INDEX]) {
@@ -610,10 +681,6 @@ public final class TransformerActivity extends AppCompatActivity {
       effects.add(Presentation.createForHeight(resolutionHeight));
     }
 
-    // 测试加滤镜效果
-//    effects.add(createTestFilter());
-    effects.addAll(createAIEnhanceEffects());
-
     return effects.build();
   }
 
@@ -621,8 +688,8 @@ public final class TransformerActivity extends AppCompatActivity {
   private OverlayEffect createOverlayEffectFromBundle(Bundle bundle, boolean[] selectedEffects) {
     ImmutableList.Builder<TextureOverlay> overlaysBuilder = new ImmutableList.Builder<>();
     if (selectedEffects[ConfigurationActivity.OVERLAY_LOGO_AND_TIMER_INDEX]) {
-      OverlaySettings logoSettings =
-          new OverlaySettings.Builder()
+      StaticOverlaySettings logoSettings =
+          new StaticOverlaySettings.Builder()
               // Place the logo in the bottom left corner of the screen with some padding from the
               // edges.
               .setOverlayFrameAnchor(/* x= */ -1f, /* y= */ -1f)
@@ -641,8 +708,8 @@ public final class TransformerActivity extends AppCompatActivity {
       overlaysBuilder.add(logoOverlay, timerOverlay);
     }
     if (selectedEffects[ConfigurationActivity.BITMAP_OVERLAY_INDEX]) {
-      OverlaySettings overlaySettings =
-          new OverlaySettings.Builder()
+      StaticOverlaySettings overlaySettings =
+          new StaticOverlaySettings.Builder()
               .setAlphaScale(
                   bundle.getFloat(
                       ConfigurationActivity.BITMAP_OVERLAY_ALPHA, /* defaultValue= */ 1))
@@ -655,8 +722,8 @@ public final class TransformerActivity extends AppCompatActivity {
       overlaysBuilder.add(bitmapOverlay);
     }
     if (selectedEffects[ConfigurationActivity.TEXT_OVERLAY_INDEX]) {
-      OverlaySettings overlaySettings =
-          new OverlaySettings.Builder()
+      StaticOverlaySettings overlaySettings =
+          new StaticOverlaySettings.Builder()
               .setAlphaScale(
                   bundle.getFloat(ConfigurationActivity.TEXT_OVERLAY_ALPHA, /* defaultValue= */ 1))
               .build();
@@ -670,6 +737,15 @@ public final class TransformerActivity extends AppCompatActivity {
       TextOverlay textOverlay = TextOverlay.createStaticTextOverlay(overlayText, overlaySettings);
       overlaysBuilder.add(textOverlay);
     }
+    if (selectedEffects[ConfigurationActivity.CLOCK_OVERLAY_INDEX]) {
+      overlaysBuilder.add(new ClockOverlay());
+    }
+    if (selectedEffects[ConfigurationActivity.CONFETTI_OVERLAY_INDEX]) {
+      overlaysBuilder.add(new ConfettiOverlay());
+    }
+    if (selectedEffects[ConfigurationActivity.ANIMATING_LOGO_OVERLAY]) {
+      overlaysBuilder.add(new AnimatedLogoOverlay(this.getApplicationContext()));
+    }
 
     ImmutableList<TextureOverlay> overlays = overlaysBuilder.build();
     return overlays.isEmpty() ? null : new OverlayEffect(overlays);
@@ -680,6 +756,9 @@ public final class TransformerActivity extends AppCompatActivity {
     informationTextView.setText(R.string.export_error);
     progressViewGroup.setVisibility(View.GONE);
     debugFrame.removeAllViews();
+    if (isUsingMediaProjection()) {
+      mediaProjection.stop();
+    }
     Toast.makeText(getApplicationContext(), "Export error: " + exportException, Toast.LENGTH_LONG)
         .show();
     Log.e(TAG, "Export error", exportException);
@@ -723,9 +802,8 @@ public final class TransformerActivity extends AppCompatActivity {
   private void playMediaItems(MediaItem inputMediaItem, MediaItem outputMediaItem) {
     inputPlayerView.setPlayer(null);
     outputPlayerView.setPlayer(null);
-    releasePlayer();
+    releasePlayers();
 
-    Uri uri = checkNotNull(inputMediaItem.localConfiguration).uri;
     ExoPlayer outputPlayer =
         new ExoPlayer.Builder(/* context= */ this)
             .setLoadControl(
@@ -744,6 +822,7 @@ public final class TransformerActivity extends AppCompatActivity {
     this.outputPlayer = outputPlayer;
 
     // Only support showing jpg images.
+    Uri uri = checkNotNull(inputMediaItem.localConfiguration).uri;
     if (uri.toString().endsWith("jpg")) {
       inputPlayerView.setVisibility(View.GONE);
       inputImageView.setVisibility(View.VISIBLE);
@@ -757,6 +836,12 @@ public final class TransformerActivity extends AppCompatActivity {
       } catch (ExecutionException | InterruptedException e) {
         throw new IllegalArgumentException("Failed to load bitmap.", e);
       }
+    } else if (isUsingMediaProjection()) {
+      inputCardView.setVisibility(View.GONE);
+      displayInputButton.setVisibility(View.GONE);
+      Intent stopIntent = new Intent(/* context= */ this, DemoMediaProjectionService.class);
+      stopIntent.setAction(DemoMediaProjectionService.ACTION_STOP);
+      ContextCompat.startForegroundService(/* context= */ this, stopIntent);
     } else {
       inputPlayerView.setVisibility(View.VISIBLE);
       inputImageView.setVisibility(View.GONE);
@@ -807,7 +892,7 @@ public final class TransformerActivity extends AppCompatActivity {
     }
   }
 
-  private void releasePlayer() {
+  private void releasePlayers() {
     if (debugTextViewHelper != null) {
       debugTextViewHelper.stop();
       debugTextViewHelper = null;
@@ -822,12 +907,22 @@ public final class TransformerActivity extends AppCompatActivity {
     }
   }
 
-  private static void requestReadVideoPermission(AppCompatActivity activity) {
-    String permission = SDK_INT >= 33 ? READ_MEDIA_VIDEO : READ_EXTERNAL_STORAGE;
-    if (ActivityCompat.checkSelfPermission(activity, permission)
-        != PackageManager.PERMISSION_GRANTED) {
-      ActivityCompat.requestPermissions(activity, new String[]{permission}, /* requestCode= */ 0);
+  private void cleanUpExport() {
+    if (transformer != null) {
+      transformer.cancel();
+      transformer = null;
     }
+    if (outputFile != null) {
+      outputFile.delete();
+      outputFile = null;
+    }
+    if (oldOutputFile != null) {
+      oldOutputFile.delete();
+      oldOutputFile = null;
+    }
+    // The stop watch is reset after cancelling the export, in case cancelling causes the stop watch
+    // to be stopped in a transformer callback.
+    exportStopwatch.reset();
   }
 
   private void showToast(@StringRes int messageResource) {
@@ -859,10 +954,57 @@ public final class TransformerActivity extends AppCompatActivity {
     oldOutputFile = outputFile;
   }
 
+  private boolean isUsingMediaProjection() {
+    return mediaProjection != null;
+  }
+
+  /** Foreground service that's required by the media projection APIs. */
+  public static final class DemoMediaProjectionService extends Service {
+    private static final String CHANNEL_ID = "DemoMediaProjectionServiceChannel";
+    private static final String CHANNEL_NAME = "Media projection";
+    private static final int NOTIFICATION_ID = 1;
+    private static final String ACTION_EVENT_STARTED = "started";
+    private static final String ACTION_STOP = "stop";
+
+    @Override
+    @Nullable
+    public IBinder onBind(Intent intent) {
+      return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+      if (ACTION_STOP.equals(intent.getAction())) {
+        stopSelf();
+      } else {
+        Context context = this;
+        Notification notification =
+            new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setOngoing(true)
+                .setSmallIcon(R.drawable.exo_icon_play)
+                .build();
+        if (Util.SDK_INT >= 26) {
+          NotificationChannel channel =
+              new NotificationChannel(
+                  CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
+          NotificationManager manager = getSystemService(NotificationManager.class);
+          manager.createNotificationChannel(channel);
+        }
+        if (Util.SDK_INT >= 29) {
+          startForeground(NOTIFICATION_ID, notification, FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
+        } else {
+          startForeground(NOTIFICATION_ID, notification);
+        }
+        // Notify that the service is started (and it's now safe to set up media projection).
+        LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(ACTION_EVENT_STARTED));
+      }
+      return START_STICKY;
+    }
+  }
+
   private final class DemoDebugViewProvider implements DebugViewProvider {
 
-    @Nullable
-    private SurfaceView surfaceView;
+    @Nullable private SurfaceView surfaceView;
     private int width;
     private int height;
 
@@ -922,39 +1064,5 @@ public final class TransformerActivity extends AppCompatActivity {
       }
       return surfaceView;
     }
-  }
-
-  private Effect createTestFilter() {
-    InputStream inputStream = null;
-    try {
-      //512x512
-//      inputStream = getAssets().open("ArriLog.png");
-//      inputStream = getAssets().open("UrbanGold.jpg");
-      //64x64
-      inputStream = getAssets().open("beautyandthebeast.png");
-      Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-      return SingleColorLut.createFromSquareBitmap(bitmap);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (inputStream != null) {
-        try {
-          inputStream.close();
-        } catch (IOException e) {
-          // do nothing
-        }
-      }
-    }
-  }
-
-  private List<Effect> createAIEnhanceEffects() {
-    //数值设置从 shotcut 移植过来
-    return Arrays.asList(
-        new Brightness(0.0105f),
-        new Contrast(0.04f),
-        new Saturation(1.0192f),
-        new Sharpen(0.5f),
-        new ColorTemperature(-0.04f)
-    );
   }
 }
