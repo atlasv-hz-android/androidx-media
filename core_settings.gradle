@@ -111,8 +111,8 @@ project(modulePrefix + 'downloader').projectDir = new File(rootDir, 'libraries/d
 include modulePrefix + 'effect-ext'
 project(modulePrefix + 'effect-ext').projectDir = new File(rootDir, 'libraries/effect-ext')
 
-include modulePrefix + 'ui-compose'
-project(modulePrefix + 'ui-compose').projectDir = new File(rootDir, 'libraries/ui-compose')
+include modulePrefix + 'ui-compose-ext'
+project(modulePrefix + 'ui-compose-ext').projectDir = new File(rootDir, 'libraries/ui-compose-ext')
 
 include modulePrefix + 'test-utils-robolectric'
 project(modulePrefix + 'test-utils-robolectric').projectDir = new File(rootDir, 'libraries/test_utils_robolectric')

@@ -47,6 +47,7 @@ dependencies {
 
     implementation(project(":lib-exoplayer"))
     implementation(project(":lib-common-ktx"))
+    implementation(project(":lib-ui-compose"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)

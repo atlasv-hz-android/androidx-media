@@ -3,5 +3,5 @@
 ./gradlew :lib-datasource:publishToMavenLocal
 ./gradlew :lib-effect:publishToMavenLocal
 ./gradlew :lib-transformer:publishToMavenLocal
-./gradlew :ui-compose:publishToMavenLocal
+./gradlew :ui-compose-ext:publishToMavenLocal
 ./gradlew :lib-common-ktx:publishToMavenLocal
