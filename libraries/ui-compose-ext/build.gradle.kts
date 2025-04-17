@@ -51,6 +51,10 @@ dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
+    api(libs.androidx.compose.material3)
     implementation(libs.coil.compose)
+    implementation(libs.lottie.compose)
+    implementation(libs.androidx.datastore.preferences)
+
 
 }

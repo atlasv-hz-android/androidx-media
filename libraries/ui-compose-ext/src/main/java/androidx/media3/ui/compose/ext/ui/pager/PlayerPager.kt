@@ -34,7 +34,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.atlasv.android.logger.ILogger
 import androidx.media3.ui.compose.ext.data.IMediaItemModel
-import androidx.media3.ui.compose.ext.ui.core.PlayerSurface2
+import androidx.media3.ui.compose.ext.ui.surface.PlayerSurface2
 import com.google.common.net.MediaType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch

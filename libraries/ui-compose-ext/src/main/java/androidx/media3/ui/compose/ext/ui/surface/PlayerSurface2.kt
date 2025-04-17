@@ -1,4 +1,4 @@
-package androidx.media3.ui.compose.ext.ui.core
+package androidx.media3.ui.compose.ext.ui.surface
 
 import android.view.Surface
 import androidx.annotation.OptIn
