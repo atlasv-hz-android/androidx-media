@@ -20,9 +20,9 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.getDesc
 import androidx.media3.common.getHwRatio
 import androidx.media3.common.isValid
-import androidx.media3.common.util.MediaXLogger
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.atlasv.android.logger.ILogger
 import kotlin.math.roundToInt
 
 /**
@@ -45,7 +45,7 @@ fun PlayerSurface2(
     onSurfaceVisibleChanged: (Boolean) -> Unit,
     onVideoSizeValid: (VideoSize) -> Unit,
     onPlayEnded: () -> Unit,
-    logger: MediaXLogger?
+    logger: ILogger?
 ) {
 
     var validVideoSize: VideoSize by remember(inputVideoSize) {

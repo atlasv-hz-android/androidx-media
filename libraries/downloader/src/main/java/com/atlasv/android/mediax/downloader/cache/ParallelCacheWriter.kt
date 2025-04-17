@@ -1,8 +1,8 @@
 package com.atlasv.android.mediax.downloader.cache
 
-import androidx.media3.common.util.MediaXLogger
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
+import com.atlasv.android.logger.ILogger
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.getCachedBytes
@@ -32,7 +32,7 @@ class ParallelCacheWriter(
     private val outputTarget: OutputTarget,
     private val downloadListener: DownloadListener?,
     private val retryTimes: Int = 3,
-    private val logger: MediaXLogger? = null
+    private val logger: ILogger? = null
 ) {
     private val parallelProgressListener =
         ParallelProgressListener(uriString = uriString, taskId = taskId, downloadListener)
