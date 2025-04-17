@@ -1,4 +1,4 @@
-package com.atlasv.android.mediax.composeui
+package androidx.media3.ui.compose.ext.ui.core
 
 import android.view.Surface
 import androidx.annotation.OptIn

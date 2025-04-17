@@ -1,4 +1,4 @@
-package com.atlasv.android.mediax.composeui
+package androidx.media3.ui.compose.ext.lifecycle
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect

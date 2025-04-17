@@ -1,4 +1,4 @@
-package com.atlasv.android.mediax.composeui.data
+package androidx.media3.ui.compose.ext.data
 
 import androidx.annotation.OptIn
 import androidx.media3.common.VideoSize

@@ -1,4 +1,4 @@
-package com.atlasv.android.mediax.composeui
+package androidx.media3.ui.compose.ext.ui.pager
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -29,10 +29,12 @@ import androidx.media3.common.isPlayingUri
 import androidx.media3.common.isValid
 import androidx.media3.common.playIfNot
 import androidx.media3.common.zeroVideoSize
+import androidx.media3.ui.compose.ext.lifecycle.ComposableLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.atlasv.android.logger.ILogger
-import com.atlasv.android.mediax.composeui.data.IMediaItemModel
+import androidx.media3.ui.compose.ext.data.IMediaItemModel
+import androidx.media3.ui.compose.ext.ui.core.PlayerSurface2
 import com.google.common.net.MediaType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
