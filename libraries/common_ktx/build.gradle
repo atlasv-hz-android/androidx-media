@@ -45,6 +45,7 @@ android {
 }
 
 dependencies {
+    api(libs.atlasv.logger)
     api project(modulePrefix + 'lib-common')
     implementation 'androidx.core:core:' + androidxCoreVersion
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:' + kotlinxCoroutinesVersion

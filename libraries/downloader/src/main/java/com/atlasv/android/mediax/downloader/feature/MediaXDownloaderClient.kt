@@ -5,9 +5,9 @@ import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.util.MediaXLogger
 import androidx.media3.exoplayer.MetadataRetriever
 import androidx.media3.exoplayer.source.TrackGroupArray
+import com.atlasv.android.logger.ILogger
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy.Companion.SingleRangeStrategy
 import com.atlasv.android.mediax.downloader.core.DownloadListener
@@ -26,7 +26,7 @@ class MediaXDownloaderClient(
     private val appContext: Context,
     private val core: MediaXDownloaderCore,
     private val mediaTrackMuxer: MediaTrackMuxer? = null,
-    private val logger: MediaXLogger? = null
+    private val logger: ILogger? = null
 ) {
     suspend fun download(
         request: DownloadRequest,

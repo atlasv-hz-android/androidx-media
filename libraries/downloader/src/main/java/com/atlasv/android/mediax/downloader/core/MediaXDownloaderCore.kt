@@ -2,10 +2,10 @@ package com.atlasv.android.mediax.downloader.core
 
 import android.content.Context
 import androidx.media3.common.C
-import androidx.media3.common.util.MediaXLogger
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
+import com.atlasv.android.logger.ILogger
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
@@ -136,7 +136,7 @@ class MediaXDownloaderCore(
     fun asDownloaderClient(
         appContext: Context,
         mediaTrackMuxer: MediaTrackMuxer? = null,
-        logger: MediaXLogger? = null
+        logger: ILogger? = null
     ): MediaXDownloaderClient {
         return MediaXDownloaderClient(appContext, this, mediaTrackMuxer, logger)
     }

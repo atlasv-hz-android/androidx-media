@@ -13,7 +13,7 @@ ksp = "2.0.20-1.0.25"
 kotlin = "2.0.20"
 atlasvCommon = "2.8.0"
 composeBom = "2024.12.01"
-timber = "5.0.2"
+timber = "5.2.2"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -30,6 +30,7 @@ kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", v
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 coil-base = { module = "io.coil-kt:coil-base", version.ref = "coil" }
 timber = { module = "com.atlasv.android:timber", version.ref = "timber" }
+atlasv-logger = { group = "com.atlasv.android", name = "logger", version = "1.0.0" }
 
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }

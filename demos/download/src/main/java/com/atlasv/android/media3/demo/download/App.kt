@@ -1,8 +1,8 @@
 package com.atlasv.android.media3.demo.download
 
 import android.app.Application
-import androidx.media3.common.util.MediaXLogger
 import com.atlasv.android.loader.ResourceContentLoader
+import com.atlasv.android.logger.ILogger
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerFactory
 import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr
 import timber.log.Timber
@@ -19,7 +19,7 @@ class App : Application() {
             Timber.tag("res-load")
         }
         MediaXLoggerMgr.loggerFactory = object : MediaXLoggerFactory {
-            override fun createLogger(tag: String): MediaXLogger {
+            override fun createLogger(tag: String): ILogger {
                 return LoggerImpl(tag)
             }
 
@@ -31,24 +31,24 @@ class App : Application() {
     }
 }
 
-private class LoggerImpl(private val tag: String) : MediaXLogger {
+private class LoggerImpl(private val tag: String) : ILogger {
     override fun d(messageSupplier: () -> String) {
-        Timber.tag("res-load-mediax").d(messageSupplier)
+        Timber.tag(tag).d(messageSupplier)
     }
 
     override fun w(messageSupplier: () -> String) {
-        Timber.tag("res-load-mediax").w(messageSupplier)
+        Timber.tag(tag).w(messageSupplier)
     }
 
     override fun w(cause: Throwable?, messageSupplier: () -> String) {
-        Timber.tag("res-load-mediax").w(cause, messageSupplier)
+        Timber.tag(tag).w(cause, messageSupplier)
     }
 
     override fun e(messageSupplier: () -> String) {
-        Timber.tag("res-load-mediax").e(messageSupplier)
+        Timber.tag(tag).e(messageSupplier)
     }
 
     override fun e(cause: Throwable?, messageSupplier: () -> String) {
-        Timber.tag("res-load-mediax").e(cause, messageSupplier)
+        Timber.tag(tag).e(cause, messageSupplier)
     }
 }
