@@ -5,6 +5,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
@@ -29,12 +30,12 @@ import androidx.media3.common.isPlayingUri
 import androidx.media3.common.isValid
 import androidx.media3.common.playIfNot
 import androidx.media3.common.zeroVideoSize
+import androidx.media3.ui.compose.ext.data.IMediaItemModel
 import androidx.media3.ui.compose.ext.lifecycle.ComposableLifecycle
+import androidx.media3.ui.compose.ext.ui.surface.PlayerSurface2
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.atlasv.android.logger.ILogger
-import androidx.media3.ui.compose.ext.data.IMediaItemModel
-import androidx.media3.ui.compose.ext.ui.surface.PlayerSurface2
 import com.google.common.net.MediaType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -43,7 +44,7 @@ import kotlinx.coroutines.launch
  * Created by weiping on 2024/7/18
  */
 @Composable
-fun PlayerPager(
+fun BoxScope.PlayerPager(
     modifier: Modifier,
     initialPage: Int = 0,
     items: List<IMediaItemModel>,
@@ -51,7 +52,8 @@ fun PlayerPager(
     playerFactory: () -> Player,
     onPageSelected: (Int) -> Unit,
     imageLoader: ImageLoader,
-    mediaXLogger: ILogger? = null
+    mediaXLogger: ILogger? = null,
+    pageExtraContent: @Composable() (BoxScope.(pagerState: PagerState, realPagerCount: Int, player: Player) -> Unit),
 ) {
     val player = remember {
         playerFactory()
@@ -103,7 +105,7 @@ fun PlayerPager(
             }
         }
     }
-
+    pageExtraContent(pagerState, realPagerCount, player)
     LaunchedEffect(key1 = pagerState) {
         snapshotFlow { pagerState.currentPage % realPagerCount }.distinctUntilChanged()
             .collect { page ->
@@ -176,7 +178,7 @@ private fun ImageItemView(uri: String, imageLoader: ImageLoader) {
         model = uri,
         contentDescription = null,
         imageLoader = imageLoader,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxWidth()
     )
 }
 
