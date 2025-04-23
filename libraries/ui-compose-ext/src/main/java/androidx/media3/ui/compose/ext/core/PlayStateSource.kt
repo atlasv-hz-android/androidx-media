@@ -2,10 +2,12 @@ package androidx.media3.ui.compose.ext.core
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.ext.analytics.PlayerAnalytics
 import androidx.media3.common.ext.util.PlayerDateTimeFormatUtil
+import androidx.media3.common.mediaItemTransitionReasonDesc
 import androidx.media3.common.playIfNot
 import androidx.media3.common.togglePlayState
 import androidx.media3.datasource.DataSource
@@ -48,7 +50,8 @@ class PlayStateSource(
     val currentPosition = MutableStateFlow(0L)
     val duration = MutableStateFlow(0L)
     val shouldShowSwipeGuide =
-        PlayerPreferences.shouldShowClickSwipeGuide(appContext = context).stateIn(scope, SharingStarted.WhileSubscribed(5_000), false)
+        PlayerPreferences.shouldShowClickSwipeGuide(appContext = context)
+            .stateIn(scope, SharingStarted.WhileSubscribed(5_000), false)
     val playProgress = combine(duration, currentPosition) { duration, currentPosition ->
         if (duration <= 0) {
             0f
@@ -57,7 +60,7 @@ class PlayStateSource(
         }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), 0f)
     val playerError = MutableStateFlow<Exception?>(null)
-
+    val currentMediaUri = MutableStateFlow<String?>(null)
     private fun startDispatchProgress() {
         scope.launch {
             while (isActive) {
@@ -71,6 +74,15 @@ class PlayStateSource(
                 duration.value = player.duration
             }
         }
+    }
+
+    override fun onMediaItemTransition(
+        mediaItem: MediaItem?,
+        reason: @Player.MediaItemTransitionReason Int
+    ) {
+        val mediaUri = mediaItem?.localConfiguration?.uri?.toString()
+        mediaXLogger?.d { "onMediaItemTransition(${mediaUri}): ${reason.mediaItemTransitionReasonDesc()}" }
+        currentMediaUri.value = mediaUri
     }
 
     fun toggleLoopPlay(onNewMode: (Int) -> Unit) {

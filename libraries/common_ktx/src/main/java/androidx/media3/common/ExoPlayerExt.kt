@@ -1,8 +1,6 @@
 package androidx.media3.common
 
 import androidx.annotation.OptIn
-import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToLong
@@ -72,4 +70,14 @@ fun getCachedVideoSize(uri: String): VideoSize? {
 @OptIn(UnstableApi::class)
 fun zeroVideoSize(): VideoSize {
     return VideoSize(0, 0)
+}
+
+fun Int.mediaItemTransitionReasonDesc(): String {
+    return when (this) {
+        Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> "repeat"
+        Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> "auto"
+        Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> "seek"
+        Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> "playlist_changed"
+        else -> "UnknownReason($this)"
+    }
 }
