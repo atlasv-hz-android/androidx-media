@@ -3,5 +3,4 @@
 ./gradlew :lib-datasource:publish
 ./gradlew :lib-effect:publish
 ./gradlew :lib-transformer:publish
-./gradlew :ui-compose-ext:publish
 ./gradlew :lib-common-ktx:publish
