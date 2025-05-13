@@ -13,5 +13,6 @@ data class DownloadRequest(
     val downloadUrl: String,
     val taskId: String,
     val mediaType: MediaType,
-    val attachAudioUrl: String?
+    val attachAudioUrl: String?,
+    var httpRequestHeaders: Map<String, String>? = null
 )

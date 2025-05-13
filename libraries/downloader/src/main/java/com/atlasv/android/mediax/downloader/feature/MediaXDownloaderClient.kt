@@ -41,7 +41,8 @@ class MediaXDownloaderClient(
             outputTarget = outputTarget,
             rangeCountStrategy = rangeCountStrategy,
             downloadListener = downloadListener,
-            throwException = throwException
+            throwException = throwException,
+            httpRequestHeaders = request.httpRequestHeaders
         ) ?: return null
         if (!MimeTypes.isVideo(request.mediaType.toString())) {
             return downloadResult
@@ -66,7 +67,8 @@ class MediaXDownloaderClient(
                     outputTarget = destAudioFile.asOutputTarget(),
                     rangeCountStrategy = SingleRangeStrategy,
                     downloadListener = null,
-                    throwException = true
+                    throwException = true,
+                    httpRequestHeaders = request.httpRequestHeaders
                 )
                 logger?.d { "Audio file downloaded to $destAudioFile(${destAudioFile.length()}), start mux..." }
                 mediaTrackMuxer.mux(

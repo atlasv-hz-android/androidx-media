@@ -65,7 +65,8 @@ class MediaXDownloaderCore(
         outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy? = null,
         downloadListener: DownloadListener?,
-        throwException: Boolean = false
+        throwException: Boolean = false,
+        httpRequestHeaders: Map<String, String>? = null
     ): DownloadResult? {
         if (writerMap[taskId] != null) {
             throw IllegalStateException("Duplicate task of $downloadUrl")
@@ -82,7 +83,8 @@ class MediaXDownloaderCore(
                 outputTarget = outputTarget,
                 targetRangeCountStrategy,
                 downloadListener.withParent(rootDownloadListener),
-                estimateContentLength
+                estimateContentLength,
+                httpRequestHeaders = httpRequestHeaders
             )
         return try {
             withContext(Dispatchers.IO) {
@@ -107,7 +109,8 @@ class MediaXDownloaderCore(
         outputTarget: OutputTarget,
         rangeCountStrategy: RangeCountStrategy,
         downloadListener: DownloadListener?,
-        estimateContentLength: Long
+        estimateContentLength: Long,
+        httpRequestHeaders: Map<String, String>? = null
     ): ParallelCacheWriter {
         val writer = ParallelCacheWriter(
             mediaXCache = mediaXCache,
@@ -117,6 +120,7 @@ class MediaXDownloaderCore(
             estimateContentLength = estimateContentLength,
             outputTarget = outputTarget,
             downloadListener = downloadListener,
+            httpRequestHeaders = httpRequestHeaders,
             logger = MediaXLoggerMgr.mediaXCacheWriterLogger
         )
         writerMap[id] = writer

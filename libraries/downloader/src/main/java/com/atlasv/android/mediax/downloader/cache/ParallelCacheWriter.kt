@@ -32,7 +32,8 @@ class ParallelCacheWriter(
     private val outputTarget: OutputTarget,
     private val downloadListener: DownloadListener?,
     private val retryTimes: Int = 3,
-    private val logger: ILogger? = null
+    private val logger: ILogger? = null,
+    private val httpRequestHeaders: Map<String, String>? = null
 ) {
     private val parallelProgressListener =
         ParallelProgressListener(uriString = uriString, taskId = taskId, downloadListener)
@@ -141,7 +142,9 @@ class ParallelCacheWriter(
     }
 
     private fun createDataSpecBuilder(key: String, uriString: String): DataSpec.Builder {
-        return DataSpec.Builder().setKey(key).setUri(uriString)
+        return DataSpec.Builder().setKey(key)
+            .setHttpRequestHeaders(httpRequestHeaders.orEmpty())
+            .setUri(uriString)
     }
 
     private fun saveToOutputStream(
