@@ -1,10 +1,7 @@
 package com.atlasv.android.media3.demo.download
 
 import android.app.Application
-import com.atlasv.android.loader.ResourceContentLoader
-import com.atlasv.android.logger.ILogger
-import com.atlasv.android.mediax.downloader.util.MediaXLoggerFactory
-import com.atlasv.android.mediax.downloader.util.MediaXLoggerMgr
+import com.android.now.logger.ILogger
 import timber.log.Timber
 
 /**
@@ -15,15 +12,6 @@ class App : Application() {
         super.onCreate()
         app = this
         Timber.plant(Timber.DebugTree())
-        ResourceContentLoader.loggerProvider = {
-            Timber.tag("res-load")
-        }
-        MediaXLoggerMgr.loggerFactory = object : MediaXLoggerFactory {
-            override fun createLogger(tag: String): ILogger {
-                return LoggerImpl(tag)
-            }
-
-        }
     }
 
     companion object {

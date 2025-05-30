@@ -13,8 +13,6 @@
 // limitations under the License.
 buildscript {
     repositories {
-        google()
-        mavenCentral()
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/AtlasXV/android-libs")
@@ -22,7 +20,15 @@ buildscript {
                 username = System.getenv("GPR_USR") ?: project.findProperty("GPR_USR")
                 password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
             }
+            content {
+                includeGroupByRegex("com\\.atlasv.*")
+                includeGroupByRegex("com\\.android\\.now.*")
+                includeVersionByRegex("androidx\\.media3.*", ".*", ".*atlasv.*")
+                includeVersionByRegex(".*", ".*", ".*Atlasv.*")
+            }
         }
+        google()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.9.2'
@@ -34,20 +40,26 @@ buildscript {
 }
 allprojects {
     repositories {
-        google()
-        mavenCentral()
-        maven {
-            url 'https://jitpack.io'
-            content {
-                includeGroup "com.github.philburk"
-            }
-        }
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/AtlasXV/android-libs")
             credentials {
                 username = System.getenv("GPR_USR") ?: project.findProperty("GPR_USR")
                 password = System.getenv("GPR_KEY") ?: project.findProperty("GPR_KEY")
+            }
+            content {
+                includeGroupByRegex("com\\.atlasv.*")
+                includeGroupByRegex("com\\.android\\.now.*")
+                includeVersionByRegex("androidx\\.media3.*", ".*", ".*atlasv.*")
+                includeVersionByRegex(".*", ".*", ".*Atlasv.*")
+            }
+        }
+        google()
+        mavenCentral()
+        maven {
+            url 'https://jitpack.io'
+            content {
+                includeGroup "com.github.philburk"
             }
         }
         mavenLocal()

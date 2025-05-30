@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.atlasv.android.media3.demo.download.ui.theme.Androidxmedia3Theme
-import com.atlasv.android.mediax.downloader.output.DownloadResult
+import com.android.now.mediax.downloader.output.DownloadResult
 
 private const val TEST_URL_VIDEO1 =
     "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/video/birds-red-crowned-cranes-cranes-219862_tiny.mp4"

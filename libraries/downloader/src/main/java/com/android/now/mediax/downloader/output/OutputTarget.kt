@@ -1,0 +1,11 @@
+package com.android.now.mediax.downloader.output
+
+import java.io.OutputStream
+
+/**
+ * Created by weiping on 2024/11/28
+ */
+interface OutputTarget {
+    fun getOutputStream(): OutputStream
+    fun onSucceed()
+}

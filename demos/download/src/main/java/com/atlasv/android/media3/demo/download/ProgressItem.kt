@@ -1,6 +1,6 @@
 package com.atlasv.android.media3.demo.download
 
-import com.atlasv.android.mediax.downloader.model.SpecProgressInfo
+import com.android.now.mediax.downloader.model.SpecProgressInfo
 
 /**
  * Created by weiping on 2024/11/8

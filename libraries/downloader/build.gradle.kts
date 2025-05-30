@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.atlasv.android.mediax.downloader"
+    namespace = "com.android.now.mediax.downloader"
     compileSdk = 34
 
     defaultConfig {
