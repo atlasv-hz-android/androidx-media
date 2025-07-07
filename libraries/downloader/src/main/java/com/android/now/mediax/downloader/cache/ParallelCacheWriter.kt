@@ -1,5 +1,6 @@
 package com.android.now.mediax.downloader.cache
 
+import android.util.Log
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
 import com.android.now.logger.ILogger
@@ -19,6 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.io.InterruptedIOException
+import kotlin.concurrent.Volatile
 
 /**
  * Created by weiping on 2024/11/5
@@ -39,7 +41,8 @@ class ParallelCacheWriter(
         ParallelProgressListener(uriString = uriString, taskId = taskId, downloadListener)
     private val cacheWriters = mutableSetOf<CacheWriter>()
     private var jobs: List<Deferred<Unit?>>? = null
-
+    @Volatile
+    private var isCanceled = false
     // 是否标记为删除
     private var needDelete: Boolean = false
 
@@ -109,6 +112,7 @@ class ParallelCacheWriter(
         // 最多执行retryTimes+1次，重试3次则最多执行4次
         for (runTimes in 0..retryTimes) {
             try {
+                Log.d("MediaXDownloaderCore", " start write cache : $cacheWriter canceled: $isCanceled")
                 logger?.d { "[${Thread.currentThread().name}]cacheWithRetry($runTimes/$retryTimes) start..." }
                 cacheWriter.cache()
                 logger?.d { "[${Thread.currentThread().name}]cacheWithRetry($runTimes/$retryTimes) success" }
@@ -133,7 +137,11 @@ class ParallelCacheWriter(
         return CacheWriter(
             dataSource, dataSpec, null,
             parallelProgressListener.asProgressListener(index, rangeCount, estimateContentLength)
-        )
+        ).apply {
+            if (isCanceled){
+                cancel()
+            }
+        }
     }
 
     private fun deleteResource(uriString: String) {
@@ -185,6 +193,7 @@ class ParallelCacheWriter(
 
     fun cancel(alsoDelete: Boolean = false) {
         needDelete = alsoDelete
+        isCanceled = true
         try {
             cacheWriters.forEach {
                 it.cancel()
