@@ -32,7 +32,7 @@ import androidx.media3.common.zeroVideoSize
 import androidx.media3.ui.compose.ext.lifecycle.ComposableLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
-import com.atlasv.android.logger.ILogger
+import com.android.now.logger.ILogger
 import androidx.media3.ui.compose.ext.data.IMediaItemModel
 import androidx.media3.ui.compose.ext.ui.surface.PlayerSurface2
 import com.google.common.net.MediaType

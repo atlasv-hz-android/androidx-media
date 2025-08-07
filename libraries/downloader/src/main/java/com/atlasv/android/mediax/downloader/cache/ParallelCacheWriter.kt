@@ -3,7 +3,7 @@ package com.atlasv.android.mediax.downloader.cache
 import android.util.Log
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.cache.CacheWriter
-import com.atlasv.android.logger.ILogger
+import com.android.now.logger.ILogger
 import com.atlasv.android.mediax.downloader.core.DownloadListener
 import com.atlasv.android.mediax.downloader.core.MediaXCache
 import com.atlasv.android.mediax.downloader.datasource.getCachedBytes

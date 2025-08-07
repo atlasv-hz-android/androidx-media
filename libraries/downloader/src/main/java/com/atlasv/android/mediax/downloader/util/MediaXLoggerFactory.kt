@@ -1,6 +1,6 @@
 package com.atlasv.android.mediax.downloader.util
 
-import com.atlasv.android.logger.ILogger
+import com.android.now.logger.ILogger
 
 /**
  * Created by weiping on 2025/2/21

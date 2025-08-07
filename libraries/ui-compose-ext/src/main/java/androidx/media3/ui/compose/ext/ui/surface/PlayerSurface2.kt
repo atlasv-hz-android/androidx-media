@@ -22,7 +22,7 @@ import androidx.media3.common.getHwRatio
 import androidx.media3.common.isValid
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.atlasv.android.logger.ILogger
+import com.android.now.logger.ILogger
 import kotlin.math.roundToInt
 
 /**

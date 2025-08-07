@@ -5,7 +5,7 @@ import androidx.media3.common.C
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import com.atlasv.android.appcontext.AppContextHolder.Companion.appContext
-import com.atlasv.android.logger.ILogger
+import com.android.now.logger.ILogger
 import com.atlasv.android.mediax.downloader.cache.ParallelCacheWriter
 import com.atlasv.android.mediax.downloader.cache.RangeCountStrategy
 import com.atlasv.android.mediax.downloader.cache.SimpleRangeStrategy
