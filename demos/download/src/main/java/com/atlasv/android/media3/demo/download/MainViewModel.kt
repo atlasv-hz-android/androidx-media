@@ -1,20 +1,18 @@
 package com.atlasv.android.media3.demo.download
 
-import android.net.Uri
 import android.os.Build
 import androidx.annotation.OptIn
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.util.UnstableApi
 import com.android.now.appcontext.AppContextHolder.Companion.appContext
-import com.android.now.loader.request.ContentRequestStringModel
 import com.android.now.mediax.downloader.cache.SimpleRangeStrategy
 import com.android.now.mediax.downloader.output.ContentUriOutputTarget
 import com.android.now.mediax.downloader.output.DownloadResult
 import com.android.now.mediax.downloader.output.FileOutputTarget
 import com.android.now.mediax.downloader.output.OutputTarget
 import com.android.now.mediax.downloader.output.asUuidFileName
-import com.android.now.mediax.downloader.util.MediaXLoggerMgr.mediaXLogger
 import com.google.common.net.MediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,9 +23,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.UUID
-import kotlin.math.roundToInt
-import kotlin.system.measureTimeMillis
 
 /**
  * Created by weiping on 2024/8/23
@@ -46,26 +41,7 @@ class MainViewModel : ViewModel() {
 
     fun testDownload(downloadUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            kotlin.runCatching {
-                DownloaderAgent.downloadCore.contentLengthLoader.fetch(
-                    ContentRequestStringModel(
-                        uriString = downloadUrl
-                    )
-                )
-            }.getOrElse {
-                mediaXLogger?.e(it) { "testDownload failed" }
-            }
-            testRangeCount(downloadUrl, 1, 1)
-        }
-    }
-
-    fun testDuplicateDownload(downloadUrl: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repeat(3) {
-                launch {
-                    testRangeCount(downloadUrl, 3, 1, id = "${UUID.randomUUID()}")
-                }
-            }
+            testRangeCount(downloadUrl, 3)
         }
     }
 
@@ -77,7 +53,7 @@ class MainViewModel : ViewModel() {
                 relativePath = "DemoFiles",
                 mediaType = MediaType.MP4_VIDEO, // TODO 根据实际解析结果来传
                 destNameCreator = {
-                    "$id-${Uri.parse(downloadUrl).lastPathSegment}"
+                    "$id-${downloadUrl.toUri().lastPathSegment}"
                 }
             )
         } else {
@@ -86,7 +62,7 @@ class MainViewModel : ViewModel() {
                     File(
                         appContext.getExternalFilesDir(null),
                         "download-files/${
-                            Uri.parse(downloadUrl).lastPathSegment.asUuidFileName(
+                            downloadUrl.toUri().lastPathSegment.asUuidFileName(
                                 MediaType.ANY_VIDEO_TYPE
                             )
                         }"
@@ -99,22 +75,9 @@ class MainViewModel : ViewModel() {
     private suspend fun testRangeCount(
         downloadUrl: String,
         rangeCount: Int,
-        testCount: Int,
         id: String = downloadUrl,
     ) {
-        val avgTime = (1..testCount).map {
-            measureTimeMillis {
-                performDownload(downloadUrl, SimpleRangeStrategy(rangeCount), id)
-            }
-        }.let {
-            val filteredList = if (it.size >= 5) {
-                it.sorted().subList(1, it.size - 1)
-            } else {
-                it
-            }
-            mediaXLogger?.d { "Calc list: $it -> $filteredList" }
-            filteredList
-        }.average().roundToInt()
+        performDownload(downloadUrl, SimpleRangeStrategy(rangeCount), id)
     }
 
     private suspend fun performDownload(
