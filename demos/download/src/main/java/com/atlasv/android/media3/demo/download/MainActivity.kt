@@ -28,37 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.atlasv.android.media3.demo.download.ui.theme.Androidxmedia3Theme
 import com.android.now.mediax.downloader.output.DownloadResult
-
-private const val TEST_URL_VIDEO1 =
-    "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/video/birds-red-crowned-cranes-cranes-219862_tiny.mp4"
-private const val TEST_URL_VIDEO2 =
-    "https://richman-media.sfo3.cdn.digitaloceanspaces.com/public/overlay/resources/butterflies-171635.mp4"
-
-private const val TEST_URL_IMAGE_1 =
-    "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/image/mountains-7543273.jpg"
-private const val TEST_URL_IMAGE_2 =
-    "https://richman-media.sfo3.cdn.digitaloceanspaces.com/public/overlay/previews/astronaut-171361.webp"
-private const val TEST_URL_IMAGE_3 =
-    "https://storage.googleapis.com/public-market-event-files/20240822/banner.webp"
-
-private const val TEST_URL_AUDIO_1 =
-    "https://mwping-android.oss-cn-hangzhou.aliyuncs.com/audio/guitar_xushi_aigei_com.mp3"
-
-// Head 请求拿不到Content-Length，code=404
-private const val PIXABAY_VIDEO_1 = "https://cdn.pixabay.com/video/2023/01/30/148597-794221559.mp4"
-
-private const val X_VIDEO_1 =
-    "https://video.twimg.com/amplify_video/1821285816372514816/vid/avc1/480x270/ghNQV5-RKNnYAfNs.mp4?tag=14"
+import com.atlasv.android.media3.demo.download.ui.theme.Androidxmedia3Theme
 
 private const val DO_VIDEO1 =
     "https://downloader-media.nyc3.cdn.digitaloceanspaces.com/public/video/test/148597-794221559_medium.mp4"
-private const val DO_VIDEO2 =
-    "https://downloader-media.nyc3.cdn.digitaloceanspaces.com/public/video/test/148597-794221559.mp4"
-
-private const val LONG_NAME_VIDEO =
-    "https://ssscdn.io/getmyfb/NDIzMjExMjM0NTYzMjEzM29ySUcxSG83VkVKUVJ3RDVuMTNTdndIckszd00wRHVDcG53QXYwSm4wKzlrS2dVbEZLbTJ0dDF0MkRsUzYzUEhEVFducU0zckxXVklZT2hzNmtiWVVybW1uK2cwTUw3eFlkaWFLUnBxZmUzd1ZHZkc1ZEZmOWx2a2dlcEF5QnVOZjUrV1ZFWHE5ODA2aFBUZjU0YWJRR1AwTkVYYzJUaHYzUHFCZUFqMERPOXFEUzR2Sm9mR3EvejlOVlVweVM5SU1CbWd2Wm81MmV6cUZPSFJ4Rkt0MUhmZCt4OFFxTlpaL1Qwc3RxaXNNS3FhUzZPcWlrTWcyYkpEYW50eXJlQWZCWDRjQ0x4TUk1elBrcWVudUQzU29VZ0kvdDNSeVNRWFIrenNBOGdSSUZaRDFTQjkvSEJrN05ic1V1ZnNMUVFINll2S3NESjFlVUxUcm5vVFpCa0hYQ00xZUpJME52ekZYMTJmRHg5bVlQanRMa0VTMFcwMXBjeEJtUTVmaXAvaFJVQ3ZHcnhVUjE1ZVVXVnFRQUpSd2FXVWFGTndPQTJ1Z3ljSFF0RS9JVm1GTTBTSUdiTVVLMG41WDVZRnh4YTZrYXNhNXM4YitPZE9EckpLNm52TnROZkxhNm9TVi9jNWdTSlJqTkxCbWoxVG8wTEVqUy9LaFVOTkxxNXlLWmZkT1JSRjdsNTgxQ3FhQkpWOXZiTkxNbGpwOUZPa05xcFRsL3NFOE1MdHpmdk5vclZXQlVycUtSUHAveHRqOFBXUVpGay9TVGEzdTVlcXBsdzd6dndVNE9PY2N5Szh2NzE0a0U1bmtlTlQ4V2JNWHM3eUJUeGZWZTlKdFhsMEYvTWFqb2FUbDhxN0V6Y2dYNUtEK1BnanN2cU1LNktaanlNZXZpRlgvZklMdkdxb25RYW5IS3VkbW96Wkw1WG4wS2dHV0JiN1pnSCsyVzFhMWRuWWYyd0hDUEdwelpWcG1LZnByZ0NWQmJoSFZqUmNSenE2bnRiank3MkxzZ3MraE5heTlUM3lpQ3NNSnpnWFJyMVlsTFB5R0V1WGN2LzA4bFhNZXZKb3Jjd0tNdzc3c3l2emZnY2FkSW5aSS9ReDBjVE92OVMyMTU1eXBSNEVmNkNBcFhIR2k1M1NVU1FWVnV0Q0ROMDFQL0F2eW1seXZ4d3oxWGE0dnUvdWNiTjZQazFWbTNyRSs3MDdEd2pKVVJvMGIxV1krQlZNUkZoR0V5clRIRythSC9oQThZNDZpdWhSQ2xBdmNHd3RUdVU2aHdXd0NYTHJqbXlpV1lBdTJibGVmZUdKamlqUE9kZEVvYzJscjBEdExhcEVOdDE3bHVNelJhbzlnaklSS2RtbCtNNEZTTURvTXU3N1F6akRmNmpxNFhoY3h3PT0="
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MainViewModel>()
@@ -76,33 +50,8 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         item {
-                            Greeting(text = "Aliyun", modifier = Modifier, onClick = {
-                                viewModel.testDownload(downloadUrl = TEST_URL_VIDEO1)
-//                            viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_1)
-//                            viewModel.testDownload(downloadUrl = TEST_URL_AUDIO_1)
-                            })
-
                             Greeting(text = "Digital Ocean", modifier = Modifier, onClick = {
                                 viewModel.testDownload(downloadUrl = DO_VIDEO1)
-                            })
-
-                            Greeting(text = "Google Storage", modifier = Modifier, onClick = {
-                                viewModel.testDownload(downloadUrl = TEST_URL_IMAGE_3)
-                            })
-
-                            Greeting(text = "Pixabay", modifier = Modifier, onClick = {
-                                viewModel.testDownload(downloadUrl = PIXABAY_VIDEO_1)
-                            })
-
-                            Greeting(text = "X", modifier = Modifier, onClick = {
-                                viewModel.testDownload(downloadUrl = X_VIDEO_1)
-                            })
-
-                            Greeting(text = "同链接下载多次", modifier = Modifier, onClick = {
-                                viewModel.testDuplicateDownload(downloadUrl = TEST_URL_VIDEO2)
-                            })
-                            Greeting(text = "超长文件名", modifier = Modifier, onClick = {
-                                viewModel.testDownload(downloadUrl = LONG_NAME_VIDEO)
                             })
                         }
                         items(downloadItems) {
