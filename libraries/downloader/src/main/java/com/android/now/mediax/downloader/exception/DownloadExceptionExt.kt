@@ -17,6 +17,6 @@ fun Throwable.isIoCancelException(): Boolean {
     }
 }
 
-fun Throwable.wrapAsDownloadFailedException(downloadUrl: String): Throwable {
-    return DownloadFailException(downloadUrl, this)
+fun Throwable.wrapAsDownloadFailedException(downloadUrl: String, isNewTask: Boolean): Throwable {
+    return DownloadFailException(downloadUrl, this, isNewTask = isNewTask)
 }

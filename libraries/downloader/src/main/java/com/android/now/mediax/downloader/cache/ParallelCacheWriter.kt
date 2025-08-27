@@ -83,10 +83,16 @@ class ParallelCacheWriter(
                 }
                 jobs?.awaitAll()
                 logger?.d { "[${Thread.currentThread().name}]onDownloadSuccess: uriString=$uriString, taskId=$taskId" }
-                downloadListener?.onDownloadSuccess(taskId, uriString, rangeCount)
+                downloadListener?.onDownloadSuccess(taskId, uriString, rangeCount, isNewTask)
                 val fileLength = saveToOutputStream(uriString, outputTarget)
                 logger?.d { "[${Thread.currentThread().name}]onSaveSuccess($fileLength): uriString=$uriString, taskId=$taskId" }
-                downloadListener?.onSaveSuccess(taskId, uriString, fileLength, outputTarget)
+                downloadListener?.onSaveSuccess(
+                    taskId,
+                    uriString,
+                    fileLength,
+                    outputTarget,
+                    isNewTask
+                )
                 DownloadResult(taskId = taskId, uriString, outputTarget, fileLength)
             } catch (cause: CancellationException) {
                 if (needDelete) {
@@ -96,7 +102,7 @@ class ParallelCacheWriter(
                 }
                 val realReason = cause.cause
                     ?.takeIf { !it.isIoCancelException() }
-                    ?.wrapAsDownloadFailedException(downloadUrl = uriString)
+                    ?.wrapAsDownloadFailedException(downloadUrl = uriString, isNewTask = isNewTask)
                 if (realReason != null) {
                     downloadListener?.onDownloadFailed(taskId, uriString, realReason)
                 }
