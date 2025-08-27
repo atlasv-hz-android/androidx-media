@@ -54,9 +54,14 @@ class DownloadListenerParent(private val children: List<DownloadListener>) : Dow
         }
     }
 
-    override fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int) {
+    override fun onDownloadSuccess(
+        taskId: String,
+        downloadUrl: String,
+        rangeCount: Int,
+        isNewTask: Boolean
+    ) {
         children.forEach { child ->
-            child.onDownloadSuccess(taskId, downloadUrl, rangeCount)
+            child.onDownloadSuccess(taskId, downloadUrl, rangeCount, isNewTask)
         }
     }
 
@@ -64,10 +69,11 @@ class DownloadListenerParent(private val children: List<DownloadListener>) : Dow
         taskId: String,
         downloadUrl: String,
         fileSize: Long,
-        outputTarget: OutputTarget
+        outputTarget: OutputTarget,
+        isNewTask: Boolean
     ) {
         children.forEach { child ->
-            child.onSaveSuccess(taskId, downloadUrl, fileSize, outputTarget)
+            child.onSaveSuccess(taskId, downloadUrl, fileSize, outputTarget, isNewTask)
         }
     }
 

@@ -108,7 +108,10 @@ class ParallelCacheWriter(
                 }
                 throw (realReason ?: cause)
             } catch (cause: Throwable) {
-                val downloadException = cause.wrapAsDownloadFailedException(downloadUrl = uriString)
+                val downloadException = cause.wrapAsDownloadFailedException(
+                    downloadUrl = uriString,
+                    isNewTask = isNewTask
+                )
                 downloadListener?.onDownloadFailed(taskId, uriString, downloadException)
                 throw downloadException
             }

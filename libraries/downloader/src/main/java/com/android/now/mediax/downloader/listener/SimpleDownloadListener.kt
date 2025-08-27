@@ -34,14 +34,20 @@ open class SimpleDownloadListener : DownloadListener {
     override fun onDownloadRestart(taskId: String, downloadUrl: String) {
     }
 
-    override fun onDownloadSuccess(taskId: String, downloadUrl: String, rangeCount: Int) {
+    override fun onDownloadSuccess(
+        taskId: String,
+        downloadUrl: String,
+        rangeCount: Int,
+        isNewTask: Boolean
+    ) {
     }
 
     override fun onSaveSuccess(
         taskId: String,
         downloadUrl: String,
         fileSize: Long,
-        outputTarget: OutputTarget
+        outputTarget: OutputTarget,
+        isNewTask: Boolean
     ) {
     }
 
